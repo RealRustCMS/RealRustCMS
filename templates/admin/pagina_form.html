@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+
+{% block titulo %}{{ form_titulo }}{% endblock %}
+
+{% block estilos %}
+<!-- Quill fixo em 2.0.2: a 2.0.3 tem regressão no getSemanticHTML que troca
+     todo espaço por &nbsp; (slab/quill#4509). Não usar @2 nem @2.0.3. -->
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
+<style>
+  .form-grid { display: grid; grid-template-columns: 1fr 280px; gap: 20px; align-items: start; }
+  .form-main { display: flex; flex-direction: column; gap: 16px; }
+  .form-side { display: flex; flex-direction: column; gap: 16px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+  .form-input { padding: 8px 11px; border: 1px solid var(--border); border-radius: 7px; font-size: 13.5px; font-family: 'DM Sans', sans-serif; color: var(--text-primary); background: var(--bg-surface); outline: none; transition: border-color .15s; }
+  .form-input:focus { border-color: var(--accent); }
+  .ql-toolbar { border-radius: 7px 7px 0 0 !important; border-color: var(--border) !important; background: var(--bg-elevated); }
+  .ql-container { border-radius: 0 0 7px 7px !important; border-color: var(--border) !important; font-family: 'DM Sans', sans-serif !important; font-size: 14px !important; min-height: 360px; }
+  .ql-editor { min-height: 360px; line-height: 1.7; }
+  .side-card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+  .side-card-title { font-size: 11.5px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 12px; }
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-subtle); }
+  .toggle-row:last-child { border-bottom: none; }
+  .toggle-label { font-size: 13px; color: var(--text-secondary); }
+  .toggle-input { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
+  .erro-box { background: var(--danger-bg); border: 1px solid var(--danger-bdr); border-radius: 8px; padding: 12px 16px; font-size: 13px; color: var(--danger); }
+  .erro { color: var(--danger); font-size: 12.5px; padding: 10px 14px; background: var(--danger-bg); border: 1px solid var(--danger-bdr); border-radius: 7px; }
+  .modo-tabs { display: flex; gap: 0; border: 1px solid var(--border); border-radius: 7px; overflow: hidden; margin-bottom: 4px; }
+  .modo-tab { flex: 1; padding: 7px 12px; font-size: 12.5px; font-weight: 500; font-family: 'DM Sans', sans-serif; border: none; background: var(--bg-elevated); color: var(--text-muted); cursor: pointer; transition: all .13s; }
+  .modo-tab.ativo { background: var(--accent); color: #fff; }
+  .html-bruto-aviso { font-size: 11.5px; color: var(--text-muted); padding: 8px 10px; background: var(--bg-elevated); border-radius: 6px; border: 1px solid var(--border); margin-bottom: 6px; }
+  #html-bruto-area { width: 100%; min-height: 360px; font-family: 'DM Mono', monospace; font-size: 12.5px; line-height: 1.6; padding: 10px 12px; border: 1px solid var(--border); border-radius: 7px; background: var(--bg-surface); color: var(--text-primary); resize: vertical; outline: none; transition: border-color .15s; }
+  #html-bruto-area:focus { border-color: var(--accent); }
+</style>
+{% endblock %}
+
+{% block topbar_acoes %}
+<div style="display:flex; gap:8px;">
+  <a href="/admin/paginas" class="btn btn-secondary">← Voltar</a>
+  <button type="button" onclick="document.getElementById('form-pagina').requestSubmit()" class="btn btn-primary">{{ form_botao }}</button>
+</div>
+{% endblock %}
+
+{% block conteudo %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{{ form_titulo }}</h1>
+  </div>
+</div>
+
+{% if erro %}
+<div class="erro-box" style="margin-bottom:16px;">{{ erro }}</div>
+{% endif %}
+
+<form id="form-pagina" method="post" action="{{ form_action }}">
+  <div class="form-grid">
+    <div class="form-main">
+
+      <div class="form-group">
+        <label class="form-label">Título</label>
+        <input type="text" name="titulo" class="form-input" value="{{ titulo }}" required placeholder="Ex: Sobre esse site">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Conteúdo</label>
+
+        <div class="modo-tabs">
+          <button type="button" class="modo-tab" id="tab-editor" onclick="alternarModo('editor')">Editor rico</button>
+          <button type="button" class="modo-tab" id="tab-html" onclick="alternarModo('html')">HTML livre</button>
+        </div>
+
+        <!-- Modo editor rico (Quill) -->
+        <div id="bloco-editor">
+          <div id="quill-editor">{{ corpo | safe }}</div>
+          <textarea name="corpo" id="corpo" style="display:none">{{ corpo | safe }}</textarea>
+        </div>
+
+        <!-- Modo HTML livre -->
+        <div id="bloco-html" style="display:none">
+          <p class="html-bruto-aviso">Cole aqui o HTML completo — estilos, scripts e estrutura são preservados na renderização pública.</p>
+          <textarea id="html-bruto-area" name="html_bruto" placeholder="<!-- Cole seu HTML aqui -->">{{ html_bruto | default(value='') }}</textarea>
+        </div>
+
+      </div>
+
+    </div>
+
+    <div class="form-side">
+
+      <div class="side-card">
+        <div class="side-card-title">Publicação</div>
+        <div class="toggle-row">
+          <span class="toggle-label">Publicada</span>
+          <input type="checkbox" name="publicada" class="toggle-input" {% if publicada %}checked="checked"{% endif %}>
+        </div>
+      </div>
+
+      <div class="side-card">
+        <div class="side-card-title">Visibilidade</div>
+        <div class="toggle-row">
+          <span class="toggle-label">🔒 Restrita a membros</span>
+          <input type="checkbox" name="restrito" class="toggle-input" {% if restrito %}checked="checked"{% endif %}>
+        </div>
+        <p style="font-size:11.5px; color:var(--text-muted); margin-top:8px;">Visitantes sem login são redirecionados para a tela de login ao tentar acessar.</p>
+      </div>
+
+      <div class="side-card">
+        <div class="side-card-title">SEO</div>
+        <div class="form-group" style="margin-top:4px;">
+          <label class="form-label">Título SEO <span style="font-weight:400; color:var(--text-muted); text-transform:none;">(opcional)</span></label>
+          <input type="text" name="titulo_seo" class="form-input" value="{{ titulo_seo | default(value='') }}" placeholder="Sobrescreve o título nas buscas">
+          <span style="font-size:11.5px; color:var(--text-muted); margin-top:4px;">Deixe vazio para usar o título da página</span>
+        </div>
+      </div>
+
+      <div class="side-card">
+        <div class="side-card-title">Ordem no menu</div>
+        <div class="form-group" style="margin-top:4px;">
+          <input type="number" name="ordem" class="form-input" value="{{ ordem }}" min="0" placeholder="0">
+          <span style="font-size:11.5px; color:var(--text-muted); margin-top:4px;">Menor número aparece primeiro</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</form>
+
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+<script>
+var quill;
+
+function imageUploadHandler() {
+  var input = document.createElement('input');
+  input.setAttribute('type', 'file');
+  input.setAttribute('accept', 'image/png,image/jpeg,image/gif,image/webp');
+  input.click();
+
+  input.onchange = async function() {
+    var file = input.files[0];
+    if (!file) return;
+
+    var formData = new FormData();
+    formData.append('imagem', file);
+    formData.append('_csrf', '{{ csrf_token }}');
+
+    var resp  = await fetch('/admin/upload/imagem', { method: 'POST', body: formData });
+    var dados = await resp.json();
+
+    if (dados.url) {
+      var range = quill.getSelection(true);
+      quill.insertEmbed(range.index, 'image', dados.url);
+      quill.setSelection(range.index + 1);
+    } else {
+      var erroDiv = document.getElementById('upload-erro');
+      if (!erroDiv) {
+        erroDiv = document.createElement('div');
+        erroDiv.id        = 'upload-erro';
+        erroDiv.className = 'erro';
+        erroDiv.style.marginTop = '8px';
+        document.getElementById('quill-editor').parentNode.appendChild(erroDiv);
+      }
+      erroDiv.textContent = dados.erro || 'Erro desconhecido no upload.';
+      setTimeout(function() { erroDiv.textContent = ''; }, 4000);
+    }
+  };
+}
+
+quill = new Quill('#quill-editor', {
+  theme: 'snow',
+  modules: {
+    toolbar: {
+      container: [
+        [{ header: [2, 3, false] }],
+        ['bold', 'italic', 'underline'],
+        [{ list: 'ordered' }, { list: 'bullet' }],
+        ['link', 'blockquote', 'image'],
+        ['clean']
+      ],
+      handlers: { image: imageUploadHandler }
+    }
+  }
+});
+
+// ── Alternância de modo ──────────────────────────────────────────────────────
+// modoAtual controla qual bloco está visível e qual campo é submetido.
+// No modo "editor": corpo é preenchido pelo Quill, html_bruto fica vazio.
+// No modo "html":   html_bruto é enviado com o conteúdo; corpo fica vazio.
+//
+// IMPORTANTE: nunca interpolar html_bruto (conteúdo arbitrário do usuário,
+// pode conter aspas, tags de fechamento de script, etc.) diretamente dentro
+// de uma string JavaScript — isso quebra a sintaxe do script ou abre
+// brecha de XSS. Em vez disso, o Tera calcula um booleano simples no servidor.
+var modoAtual = {% if html_bruto %}true{% else %}false{% endif %} ? 'html' : 'editor';
+
+function alternarModo(modo) {
+  modoAtual = modo;
+  document.getElementById('bloco-editor').style.display = modo === 'editor' ? '' : 'none';
+  document.getElementById('bloco-html').style.display   = modo === 'html'   ? '' : 'none';
+  document.getElementById('tab-editor').classList.toggle('ativo', modo === 'editor');
+  document.getElementById('tab-html').classList.toggle('ativo',   modo === 'html');
+}
+
+// Aplica modo inicial ao carregar
+alternarModo(modoAtual);
+
+document.getElementById('form-pagina').addEventListener('submit', function() {
+  if (modoAtual === 'editor') {
+    // Modo editor: sincroniza Quill → textarea corpo, limpa html_bruto
+    document.getElementById('corpo').value = quill.getSemanticHTML();
+    document.getElementById('html-bruto-area').value = '';
+  } else {
+    // Modo HTML: corpo fica vazio para não sobrescrever nada
+    document.getElementById('corpo').value = '';
+  }
+});
+</script>
+{% endblock %}

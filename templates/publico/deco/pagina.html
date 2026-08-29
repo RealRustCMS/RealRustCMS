@@ -1,0 +1,48 @@
+{% extends "publico/deco/base.html" %}
+
+{% block titulo %}{% if pagina.titulo_seo %}{{ pagina.titulo_seo }}{% else %}{{ pagina.titulo }}{% endif %} — {{ site_nome }}{% endblock %}
+
+{% block meta_seo %}
+<meta name="description" content="{{ site_descricao }}">
+<link rel="canonical" href="{{ base_url }}/paginas/{{ pagina.slug }}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{% if pagina.titulo_seo %}{{ pagina.titulo_seo }}{% else %}{{ pagina.titulo }}{% endif %}">
+<meta property="og:description" content="{{ site_descricao }}">
+<meta property="og:url" content="{{ base_url }}/paginas/{{ pagina.slug }}">
+<meta property="og:site_name" content="{{ site_nome }}">
+{% endblock %}
+
+{% block estilos %}
+.pagina-corpo{font-family:var(--serif);font-size:17px;color:var(--text2);line-height:1.9}
+.pagina-corpo p{margin:0 0 24px}
+.pagina-corpo h2,.pagina-corpo h3{font-family:var(--display);font-weight:400;letter-spacing:3px;margin:48px 0 20px;color:var(--gold-light);display:flex;align-items:center;gap:16px}
+.pagina-corpo h2::after,.pagina-corpo h3::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--gold),transparent);opacity:.3}
+.pagina-corpo h2{font-size:22px}
+.pagina-corpo h3{font-size:18px}
+.pagina-corpo a{color:var(--gold);text-decoration:underline}
+.pagina-corpo ul,.pagina-corpo ol{padding-left:1.4em;margin-bottom:1.3em}
+.pagina-corpo li{margin-bottom:.5em}
+.pagina-corpo blockquote{margin:32px 0;padding:24px 28px;border-left:2px solid var(--gold);background:var(--gold-dim);font-style:italic}
+.pagina-corpo code{font-family:var(--mono);font-size:14px;background:var(--bg2);border:1px solid var(--border);padding:2px 8px;color:var(--green)}
+.pagina-corpo pre{background:var(--bg2);border:1px solid var(--border);padding:20px 24px;overflow-x:auto;margin:32px 0}
+.pagina-corpo pre code{background:none;border:none;padding:0;color:var(--text)}
+{% endblock %}
+
+{% block fullpage %}
+{% if pagina.html_bruto %}
+{{ pagina.html_bruto | safe }}
+{% else %}
+{{ super() }}
+{% endif %}
+{% endblock fullpage %}
+
+{% block conteudo %}
+<article style="max-width:700px;margin:0 auto;padding:80px 24px">
+<h1 style="font-family:var(--display);font-size:clamp(28px,4vw,44px);color:var(--text);margin:0 0 24px;font-weight:400;line-height:1.3;letter-spacing:2px">{{ pagina.titulo }}</h1>
+<div style="display:flex;align-items:center;gap:16px;margin-bottom:40px">
+<div class="deco-diamond" style="width:6px;height:6px"></div>
+<div style="flex:1;height:1px;background:linear-gradient(90deg,var(--gold),transparent);opacity:.3"></div>
+</div>
+<div class="pagina-corpo">{{ pagina.corpo | safe }}</div>
+</article>
+{% endblock %}

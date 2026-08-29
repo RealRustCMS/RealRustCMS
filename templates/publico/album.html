@@ -1,0 +1,93 @@
+{% extends "publico/base.html" %}
+
+{% block titulo %}{{ album.titulo }} — {{ site_nome }}{% endblock %}
+
+{% block estilos %}
+<style>
+  .album-header { margin-bottom: 32px; }
+  .album-titulo { font-size: 26px; font-weight: 600; letter-spacing: -.5px; margin-bottom: 6px; }
+  .album-meta { font-size: 13px; color: var(--text-muted); }
+  .voltar { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--accent); text-decoration: none; margin-bottom: 28px; }
+  .voltar:hover { color: var(--accent-hover); }
+  .fotos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+  .foto-item { aspect-ratio: 1; border-radius: 8px; overflow: hidden; background: var(--bg-elevated); cursor: pointer; }
+  .foto-item img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .3s; }
+  .foto-item:hover img { transform: scale(1.04); }
+  .vazio { text-align: center; padding: 48px 0; color: var(--text-muted); }
+
+  /* Lightbox */
+  .lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.92); z-index: 1000; align-items: center; justify-content: center; }
+  .lightbox.ativo { display: flex; }
+  .lightbox img { max-width: 90vw; max-height: 90vh; border-radius: 4px; object-fit: contain; }
+  .lightbox-fechar { position: absolute; top: 20px; right: 24px; color: #fff; font-size: 28px; cursor: pointer; line-height: 1; background: none; border: none; }
+  .lightbox-nav { position: absolute; top: 50%; transform: translateY(-50%); color: #fff; font-size: 32px; cursor: pointer; background: none; border: none; padding: 12px; }
+  .lightbox-prev { left: 16px; }
+  .lightbox-next { right: 16px; }
+</style>
+{% endblock %}
+
+{% block conteudo %}
+<a href="/galeria" class="voltar">← Galeria</a>
+
+<div class="album-header">
+  <h1 class="album-titulo">{{ album.titulo }}</h1>
+  {% if album.descricao %}
+  <p class="album-meta">
+    {% if album.descricao %}{{ album.descricao }} · {% endif %}
+    {{ views }} visualiza{% if views == 1 %}ção{% else %}ções{% endif %}
+  </p>
+  {% endif %}
+</div>
+
+{% if fotos | length > 0 %}
+<div class="fotos-grid">
+  {% for foto in fotos %}
+  <div class="foto-item" onclick="abrirLightbox({{ loop.index0 }})">
+    <img src="{{ foto.url }}" alt="{{ foto.legenda | default(value='') }}">
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-fechar" onclick="fecharLightbox()">×</button>
+  <button class="lightbox-nav lightbox-prev" onclick="navegarLightbox(-1)">‹</button>
+  <img id="lightbox-img" src="" alt="">
+  <button class="lightbox-nav lightbox-next" onclick="navegarLightbox(1)">›</button>
+</div>
+
+<script>
+var fotos = [{% for foto in fotos %}"{{ foto.url }}"{% if not loop.last %},{% endif %}{% endfor %}];
+var indiceAtual = 0;
+
+function abrirLightbox(i) {
+  indiceAtual = i;
+  document.getElementById('lightbox-img').src = fotos[i];
+  document.getElementById('lightbox').classList.add('ativo');
+  document.body.style.overflow = 'hidden';
+}
+
+function fecharLightbox() {
+  document.getElementById('lightbox').classList.remove('ativo');
+  document.body.style.overflow = '';
+}
+
+function navegarLightbox(dir) {
+  indiceAtual = (indiceAtual + dir + fotos.length) % fotos.length;
+  document.getElementById('lightbox-img').src = fotos[indiceAtual];
+}
+
+document.getElementById('lightbox').addEventListener('click', function(e) {
+  if (e.target === this) fecharLightbox();
+});
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') fecharLightbox();
+  if (e.key === 'ArrowLeft') navegarLightbox(-1);
+  if (e.key === 'ArrowRight') navegarLightbox(1);
+});
+</script>
+{% else %}
+<div class="vazio">Nenhuma foto neste álbum ainda.</div>
+{% endif %}
+{% endblock %}

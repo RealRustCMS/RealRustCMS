@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block titulo %}Comentários{% endblock %}
+
+{% block estilos %}
+<style>
+  .badge-aprovado   { background: #e6f4e7; color: #2a7d32; border: 1px solid #c2dfc4; }
+  .badge-pendente   { background: #fff8e1; color: #e65100; border: 1px solid #ffe082; }
+  .badge-rejeitado  { background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-bdr); }
+  .comentario-corpo-preview { max-width: 400px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+</style>
+{% endblock %}
+
+{% block conteudo %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Comentários</h1>
+    {% if total_pendentes > 0 %}
+    <p class="page-sub" style="color: #e65100;">{{ total_pendentes }} aguardando moderação</p>
+    {% else %}
+    <p class="page-sub">Nenhum comentário pendente</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <div class="tw">
+    <table>
+      <thead>
+        <tr>
+          <th>Autor</th>
+          <th>Comentário</th>
+          <th>Página</th>
+          <th>Status</th>
+          <th>Data</th>
+          <th style="text-align:right">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in comentarios %}
+        <tr>
+          <td>
+            <div style="font-weight:500; color:var(--text-primary)">{{ c.autor_nome }}</div>
+            <div style="font-size:11.5px; color:var(--text-muted)">{{ c.autor_email }}</div>
+          </td>
+          <td><span class="comentario-corpo-preview">{{ c.corpo }}</span></td>
+          <td>
+            <a href="{{ c.url }}" target="_blank" style="color:var(--accent); text-decoration:none; font-size:12px; font-family:'DM Mono',monospace;">{{ c.url }}</a>
+          </td>
+          <td><span class="badge badge-{{ c.status }}">{{ c.status }}</span></td>
+          <td class="muted mono tsm">{{ c.criado_em | date(format="%d/%m/%Y") }}</td>
+          <td>
+            <div class="acts">
+              {% if c.status == "pendente" %}
+              <form method="post" action="/admin/comentarios/{{ c.id }}/aprovar">
+                <button type="submit" class="btn btn-secondary btn-sm" title="Aprovar">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20,6 9,17 4,12"/></svg>
+                </button>
+              </form>
+              <form method="post" action="/admin/comentarios/{{ c.id }}/rejeitar">
+                <button type="submit" class="btn btn-secondary btn-sm" title="Rejeitar">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </form>
+              {% endif %}
+              <form method="post" action="/admin/comentarios/{{ c.id }}/deletar" onsubmit="return confirm('Deletar comentário?')">
+                <button type="submit" class="btn btn-danger btn-sm">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3,6 5,6 21,6"/><path d="M19,6l-1,14a2,2,0,0,1-2,2H8a2,2,0,0,1-2-2L5,6"/></svg>
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+        {% if comentarios | length == 0 %}
+        <tr>
+          <td colspan="6" style="text-align:center; color:var(--text-muted); padding:32px;">
+            Nenhum comentário ainda.
+          </td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+  {% if paginacao.total_paginas > 1 %}
+  <div style="padding:14px 18px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between;">
+    <span style="font-size:12px; color:var(--text-muted)">
+      página {{ paginacao.pagina_atual }} de {{ paginacao.total_paginas }}
+    </span>
+    <div style="display:flex; gap:6px;">
+      {% if paginacao.tem_anterior %}
+      <a href="/admin/comentarios?pagina={{ paginacao.pagina_anterior }}" class="btn btn-secondary btn-sm">← Anterior</a>
+      {% endif %}
+      {% if paginacao.tem_proxima %}
+      <a href="/admin/comentarios?pagina={{ paginacao.proxima_pagina }}" class="btn btn-secondary btn-sm">Próxima →</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

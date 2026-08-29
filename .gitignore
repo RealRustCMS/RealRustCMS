@@ -1,0 +1,17 @@
+# Compilação
+/target
+
+# Variáveis de ambiente (contém senha do banco!)
+.env
+
+# Uploads gerados em runtime
+static/uploads
+
+# Cache do SQLx (opcional — pode incluir se quiser CI sem banco)
+# .sqlx
+
+# Claude Code — versiona só a skill do projeto
+.claude/*
+!.claude/skills/
+.claude/skills/*
+!.claude/skills/rustcms/

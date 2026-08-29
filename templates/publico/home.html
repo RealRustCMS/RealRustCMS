@@ -1,0 +1,218 @@
+{% extends "publico/base.html" %}
+
+{% block estilos %}
+<style>
+  /* ─── Hero ─────────────────────────────────────── */
+  .hero-destaque {
+    margin-bottom: 40px;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    text-decoration: none;
+    display: block;
+    transition: box-shadow .2s;
+    min-height: 220px;
+  }
+  .hero-destaque:hover { box-shadow: 0 6px 24px rgba(0,0,0,.1); }
+  .hero-destaque-img {
+    width: 100%;
+    height: 320px;
+    object-fit: cover;
+    display: block;
+  }
+  .hero-destaque-corpo {
+    padding: 24px 28px 28px;
+  }
+  .hero-destaque-titulo {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -.4px;
+    line-height: 1.3;
+    margin-bottom: 8px;
+  }
+  .hero-destaque-resumo {
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin-bottom: 12px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .hero-destaque-meta {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-family: "DM Mono", monospace;
+  }
+
+  /* ─── Destaques secundários ─────────────────────── */
+  .destaques-secundarios {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 13px;
+    margin-bottom: 40px;
+  }
+  .card-destaque {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    transition: box-shadow .15s, transform .15s;
+  }
+  .card-destaque:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,.08);
+  }
+  .card-destaque-img {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+  }
+  .card-destaque-img-placeholder {
+    width: 100%;
+    height: 140px;
+    background: var(--bg-elevated);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .card-destaque-img-placeholder svg {
+    width: 28px;
+    height: 28px;
+    color: var(--border-strong);
+  }
+  .card-destaque-corpo { padding: 14px 16px 16px; flex: 1; display: flex; flex-direction: column; }
+  .card-destaque-titulo {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    line-height: 1.4;
+    margin-bottom: 6px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .card-destaque-meta {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: "DM Mono", monospace;
+    margin-top: auto;
+  }
+
+  /* ─── Seção de título ───────────────────────────── */
+  .secao-titulo {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+  }
+
+  /* ─── Hero sem imagem ───────────────────────────── */
+  .hero-no-img { background: var(--bg-elevated); }
+
+  /* ─── Lista de artigos recentes ─────────────────── */
+  .artigos-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .artigo-card {
+    background: var(--bg-surface);
+    padding: 18px 24px;
+    text-decoration: none;
+    display: block;
+    transition: background 0.15s;
+  }
+  .artigo-card:hover { background: var(--row-hover); }
+  .artigo-card-titulo {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+  .artigo-card-data { font-size: 12px; color: var(--text-muted); font-family: "DM Mono", monospace; }
+
+  .vazio { text-align: center; padding: 64px 0; color: var(--text-muted); font-size: 14px; }
+</style>
+{% endblock %}
+
+{% block conteudo %}
+
+{# ── Hero (primeiro destaque) ─────────────────────────────── #}
+{% if destaque_hero %}
+<div style="margin-bottom: 12px;">
+  <p class="secao-titulo">Em destaque</p>
+</div>
+<a href="/artigos/{{ destaque_hero.slug }}" class="hero-destaque">
+  {% if destaque_hero.imagem_capa %}
+  <img src="{{ destaque_hero.imagem_capa }}" alt="{{ destaque_hero.titulo }}" class="hero-destaque-img">
+  {% endif %}
+  <div class="hero-destaque-corpo{% if not destaque_hero.imagem_capa %} hero-no-img{% endif %}">
+    <div class="hero-destaque-titulo">{{ destaque_hero.titulo }}</div>
+    {% if destaque_hero.resumo %}
+    <div class="hero-destaque-resumo">{{ destaque_hero.resumo }}</div>
+    {% endif %}
+    {% if destaque_hero.publicado_em %}
+    <div class="hero-destaque-meta">{{ destaque_hero.publicado_em | date(format="%d/%m/%Y") }}</div>
+    {% endif %}
+  </div>
+</a>
+{% endif %}
+
+{# ── Destaques secundários ────────────────────────────────── #}
+{% if destaques_secundarios | length > 0 %}
+<div class="destaques-secundarios">
+  {% for artigo in destaques_secundarios %}
+  <a href="/artigos/{{ artigo.slug }}" class="card-destaque">
+    {% if artigo.imagem_capa %}
+    <img src="{{ artigo.imagem_capa }}" alt="{{ artigo.titulo }}" class="card-destaque-img">
+    {% else %}
+    <div class="card-destaque-img-placeholder">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9l4-4 4 4 4-4 4 4"/><circle cx="8.5" cy="13.5" r="1.5"/></svg>
+    </div>
+    {% endif %}
+    <div class="card-destaque-corpo">
+      <div class="card-destaque-titulo">{{ artigo.titulo }}</div>
+      {% if artigo.publicado_em %}
+      <div class="card-destaque-meta">{{ artigo.publicado_em | date(format="%d/%m/%Y") }}</div>
+      {% endif %}
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+
+{# ── Artigos recentes ─────────────────────────────────────── #}
+{% if artigos | length > 0 %}
+{% if destaque_hero %}
+<p class="secao-titulo" style="margin-bottom: 14px;">Publicações recentes</p>
+{% endif %}
+<div class="artigos-grid">
+  {% for artigo in artigos %}
+  <a href="/artigos/{{ artigo.slug }}" class="artigo-card">
+    <div class="artigo-card-titulo">{{ artigo.titulo }}</div>
+    <div class="artigo-card-data">{{ artigo.publicado_em | date(format="%d/%m/%Y") }}</div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+{% if not destaque_hero %}
+<div class="vazio">Nenhum artigo publicado ainda.</div>
+{% endif %}
+{% endif %}
+
+{% endblock %}

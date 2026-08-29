@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>{% block titulo %}{{ site_nome }}{% endblock %}</title>
+        {% block meta_seo %}{% endblock %}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+        <link rel="stylesheet" href="/static/css/temas/{{ tema }}.css">
+        <style>
+            *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+            html { -webkit-font-smoothing: antialiased; }
+            body { font-family: 'DM Sans', sans-serif; background: var(--bg-page); color: var(--text-primary); }
+
+            .site-header { background: var(--bg-surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+            .header-inner { max-width: 860px; margin: 0 auto; padding: 0 24px; height: 56px; display: flex; align-items: center; justify-content: space-between; }
+            .site-name { font-size: 15px; font-weight: 600; color: var(--text-primary); text-decoration: none; display: flex; align-items: center; gap: 8px; }
+            .site-name:hover { color: var(--accent); }
+
+            /* NAV COM SUBMENUS */
+            .header-nav { display: flex; gap: 4px; align-items: center; }
+            .nav-item { position: relative; }
+            .nav-item > a {
+              font-size: 13.5px; color: var(--text-muted); text-decoration: none;
+              padding: 6px 10px; border-radius: 6px;
+              display: flex; align-items: center; gap: 4px;
+              transition: color .15s, background .15s;
+              white-space: nowrap;
+            }
+            .nav-item > a:hover { color: var(--text-primary); background: var(--accent-muted); }
+            .nav-item > a .nav-chevron { font-size: 9px; opacity: .5; }
+
+            /* DROPDOWN */
+            .nav-dropdown {
+              display: none; position: absolute; top: calc(100% + 4px); left: 0;
+              background: var(--bg-surface); border: 1px solid var(--border);
+              border-radius: 8px; min-width: 180px; padding: 4px;
+              box-shadow: 0 4px 16px rgba(0,0,0,.08); z-index: 200;
+            }
+            .nav-item:hover > .nav-dropdown { display: block; }
+            .nav-dropdown a {
+              display: flex; align-items: center; justify-content: space-between;
+              padding: 7px 10px; border-radius: 5px;
+              font-size: 13px; color: var(--text-secondary); text-decoration: none;
+              transition: background .1s, color .1s; white-space: nowrap; position: relative;
+            }
+            .nav-dropdown a:hover { background: var(--accent-muted); color: var(--text-primary); }
+            .nav-dropdown a .nav-chevron { font-size: 9px; opacity: .4; }
+
+            /* SUBMENUS ANINHADOS */
+            .nav-dropdown .nav-item { display: block; }
+            .nav-dropdown .nav-item > a { width: 100%; }
+            .nav-dropdown .nav-dropdown {
+              top: 0; left: calc(100% + 4px);
+              display: none;
+            }
+            .nav-dropdown .nav-item:hover > .nav-dropdown { display: block; }
+
+            .container { max-width: 860px; margin: 0 auto; padding: 48px 24px; }
+            .site-footer { border-top: 1px solid var(--border); margin-top: 80px; padding: 24px; text-align: center; font-size: 12px; color: var(--text-muted); }
+
+            {% block estilos %}{% endblock %}
+        </style>
+    </head>
+    <body>
+        {% block fullpage %}
+        <header class="site-header">
+          <div class="header-inner">
+            <a href="/" class="site-name">
+              {% if site_logo %}
+              <img src="{{ site_logo }}" alt="{{ site_nome }}" style="width:28px; height:28px; border-radius:6px; object-fit:cover;">
+              {% endif %}
+              {{ site_nome }}
+            </a>
+            <nav class="header-nav">
+              {% for item in menu %}
+              {{ self::nav_item(item=item) }}
+              {% endfor %}
+            </nav>
+            <form method="get" action="/busca" style="display:flex; gap:6px;">
+              <input type="text" name="q" placeholder="Buscar..." style="padding:6px 10px; border:1px solid var(--border); border-radius:6px; font-size:13px; font-family:'DM Sans',sans-serif; outline:none; width:160px;">
+              <button type="submit" style="padding:6px 12px; background:var(--accent); color:#fff; border:none; border-radius:6px; font-size:13px; cursor:pointer;">→</button>
+            </form>
+          </div>
+        </header>
+
+        <div class="container">{% block conteudo %}{% endblock %}</div>
+
+        <footer class="site-footer">
+            {{ site_nome }} · {{ site_descricao }}
+        </footer>
+        {% endblock fullpage %}
+    </body>
+</html>
+
+{% macro nav_item(item) %}
+<div class="nav-item">
+  <a href="{{ item.url }}"{% if item.abrir_nova_aba %} target="_blank" rel="noopener"{% endif %}>
+    {{ item.rotulo }}
+    {% if item.filhos | length > 0 %}<span class="nav-chevron">▾</span>{% endif %}
+  </a>
+  {% if item.filhos | length > 0 %}
+  <div class="nav-dropdown">
+    {% for filho in item.filhos %}
+    {{ self::nav_item(item=filho) }}
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endmacro nav_item %}

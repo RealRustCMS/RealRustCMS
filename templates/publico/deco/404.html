@@ -1,0 +1,17 @@
+{% extends "publico/deco/base.html" %}
+
+{% block titulo %}Página não encontrada — {{ site_nome }}{% endblock %}
+
+{% block conteudo %}
+<section style="min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:100px 24px">
+<div style="font-family:var(--display);font-size:clamp(64px,12vw,100px);font-weight:600;color:var(--gold-dark);letter-spacing:8px;line-height:1;margin-bottom:32px;user-select:none">404</div>
+<div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:32px">
+<div style="width:60px;height:1px;background:linear-gradient(90deg,transparent,var(--gold))"></div>
+<div class="deco-diamond"></div>
+<div style="width:60px;height:1px;background:linear-gradient(90deg,var(--gold),transparent)"></div>
+</div>
+<h1 style="font-family:var(--display);font-size:22px;font-weight:400;letter-spacing:2px;color:var(--gold-light);margin-bottom:12px">PÁGINA NÃO ENCONTRADA</h1>
+<p style="font-family:var(--serif);font-size:15px;color:var(--text2);margin-bottom:36px;font-style:italic">O endereço que você acessou não existe ou foi removido.</p>
+<a href="/" style="font-family:var(--display);font-size:11px;padding:14px 32px;background:var(--gold);color:#0B0A08;font-weight:600;letter-spacing:3px;border:1px solid var(--gold)">&larr; VOLTAR AO INÍCIO</a>
+</section>
+{% endblock %}

@@ -1,0 +1,33 @@
+/* ─── TEMA: ROXO ─────────────────────────────────────────── */
+:root {
+  --bg-page:         #f3eeff;
+  --bg-surface:      #ffffff;
+  --bg-elevated:     #EBE0FF;
+  --sidebar-bg:      #16082e;
+  --sidebar-border:  rgba(255,255,255,0.07);
+  --accent:          #7c3aed;
+  --accent-hover:    #6429d1;
+  --accent-muted:    #EBE0FF;
+  --accent-shadow:   rgba(124,58,237,0.28);
+  --accent-text:     #ffffff;
+  --text-primary:    #1a0a35;
+  --text-secondary:  #4a2880;
+  --text-muted:      #8b68c0;
+  --border:          #DAC7FF;
+  --border-subtle:   #EBE0FF;
+  --border-strong:   #AC8BEE;
+  --nav-hover:       rgba(218,199,255,0.15);
+  --nav-active-bg:   rgba(124,58,237,0.20);
+  --nav-active-text: #C7ADFF;
+  --user-av-bg:      rgba(124,58,237,0.40);
+  --row-hover:       #faf5ff;
+  --btn-secondary-hover: #EBE0FF;
+  --badge-pub-bg:    #e6f4e7;
+  --badge-pub-text:  #2a7d32;
+  --badge-pub-bdr:   #c2dfc4;
+  --badge-draft-bg:  #fff8e1;
+  --badge-draft-txt: #e65100;
+  --danger:          #c0392b;
+  --danger-bg:       #fdf2f1;
+  --danger-bdr:      #f0c4c0;
+}

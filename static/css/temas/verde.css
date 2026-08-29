@@ -1,0 +1,33 @@
+/* ─── TEMA: VERDE (padrão) ───────────────────────────────── */
+:root {
+  --bg-page:         #f2f5f2;
+  --bg-surface:      #ffffff;
+  --bg-elevated:     #edf2ed;
+  --sidebar-bg:      #111D13;
+  --sidebar-border:  rgba(255,255,255,0.07);
+  --accent:          #415D43;
+  --accent-hover:    #334d35;
+  --accent-muted:    #deeade;
+  --accent-shadow:   rgba(65,93,67,0.28);
+  --accent-text:     #ffffff;
+  --text-primary:    #141f15;
+  --text-secondary:  #3d5040;
+  --text-muted:      #7a957b;
+  --border:          #dce8dc;
+  --border-subtle:   #edf4ed;
+  --border-strong:   #b8ccb8;
+  --nav-hover:       rgba(161,204,165,0.13);
+  --nav-active-bg:   rgba(65,93,67,0.16);
+  --nav-active-text: #a8d4aa;
+  --user-av-bg:      rgba(65,93,67,0.50);
+  --row-hover:       #f6faf6;
+  --btn-secondary-hover: #e8ede8;
+  --badge-pub-bg:    #e6f4e7;
+  --badge-pub-text:  #2a7d32;
+  --badge-pub-bdr:   #c2dfc4;
+  --badge-draft-bg:  #fff8e1;
+  --badge-draft-txt: #e65100;
+  --danger:          #c0392b;
+  --danger-bg:       #fdf2f1;
+  --danger-bdr:      #f0c4c0;
+}

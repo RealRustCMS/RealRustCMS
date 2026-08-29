@@ -1,0 +1,59 @@
+{% extends "publico/base.html" %}
+
+{% block titulo %}Página não encontrada — {{ site_nome }}{% endblock %}
+
+{% block estilos %}
+<style>
+  .nao-encontrado {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 80px 24px;
+  }
+  .nao-encontrado-codigo {
+    font-size: 80px;
+    font-weight: 700;
+    color: var(--accent-muted);
+    letter-spacing: -4px;
+    line-height: 1;
+    margin-bottom: 16px;
+    font-variant-numeric: tabular-nums;
+  }
+  .nao-encontrado-titulo {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+  }
+  .nao-encontrado-sub {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 32px;
+  }
+  .nao-encontrado-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 18px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 7px;
+    text-decoration: none;
+    font-size: 13.5px;
+    font-weight: 500;
+    transition: background .15s;
+  }
+  .nao-encontrado-link:hover { background: var(--accent-hover); }
+</style>
+{% endblock %}
+
+{% block conteudo %}
+<div class="nao-encontrado">
+  <div class="nao-encontrado-codigo">404</div>
+  <h1 class="nao-encontrado-titulo">Página não encontrada</h1>
+  <p class="nao-encontrado-sub">O endereço que você acessou não existe ou foi removido.</p>
+  <a href="/" class="nao-encontrado-link">← Voltar ao início</a>
+</div>
+{% endblock %}

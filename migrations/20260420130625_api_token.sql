@@ -1,0 +1,1 @@
+ALTER TABLE usuarios ADD COLUMN api_token CHAR(64) NULL UNIQUE;

@@ -1,0 +1,231 @@
+{% extends "publico/deco/base.html" %}
+
+{% block titulo %}{{ site_nome }}{% endblock %}
+
+{% block meta_seo %}
+<meta name="description" content="{{ site_descricao }}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{ site_nome }}">
+<meta property="og:description" content="{{ site_descricao }}">
+<meta property="og:site_name" content="{{ site_nome }}">
+{% endblock %}
+
+{% block estilos %}
+.term-window{margin-top:64px;background:var(--bg2);border:1px solid var(--border);padding:24px;max-width:520px;margin-left:auto;margin-right:auto;position:relative}
+.term-window .corner{position:absolute;width:12px;height:12px;border-color:var(--gold)}
+.term-corner-tl{top:-1px;left:-1px;border-top:2px solid;border-left:2px solid}
+.term-corner-br{bottom:-1px;right:-1px;border-bottom:2px solid;border-right:2px solid}
+.term-label{font-family:var(--mono);font-size:10px;color:var(--gold);letter-spacing:3px;margin-bottom:14px;text-align:center}
+.term-body{font-family:var(--mono);font-size:13px;color:var(--text2);line-height:2;text-align:left}
+.term-cursor{display:inline-block;width:8px;height:16px;background:var(--green);margin-left:2px;animation:cursorBlink 1s step-end infinite;vertical-align:middle}
+.article-card{background:var(--card-bg);overflow:hidden}
+.article-thumb{height:200px;background:linear-gradient(135deg,#1a1608,#0d0b04);position:relative;border-bottom:1px solid var(--border)}
+.article-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.article-body{padding:28px 24px}
+.article-date{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:2px}
+.article-titulo{font-family:var(--display);font-size:17px;color:var(--text);margin:0 0 12px;font-weight:400;line-height:1.4;letter-spacing:1px}
+.article-resumo{font-family:var(--serif);font-size:14px;color:var(--text2);margin:0;line-height:1.7}
+.evento-card{background:var(--card-bg);padding:22px;display:flex;gap:18px;align-items:center}
+.evento-dia{font-family:var(--display);font-size:22px;font-weight:600;color:var(--gold);line-height:1;flex-shrink:0;width:48px;text-align:center}
+.evento-mes{font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;text-align:center;width:48px;flex-shrink:0;margin-top:4px;letter-spacing:1px}
+{% endblock %}
+
+{% block conteudo %}
+<section style="min-height:92vh;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden">
+<div style="position:absolute;inset:0;opacity:.06">
+<svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+<defs><pattern id="deco" x="0" y="0" width="120" height="120" patternUnits="userSpaceOnUse">
+<path d="M60 0L120 60L60 120L0 60Z" fill="none" stroke="#BFA040" stroke-width="0.5"/>
+<path d="M60 20L100 60L60 100L20 60Z" fill="none" stroke="#BFA040" stroke-width="0.3"/>
+<circle cx="60" cy="60" r="4" fill="none" stroke="#BFA040" stroke-width="0.3"/>
+</pattern></defs>
+<rect width="100%" height="100%" fill="url(#deco)"/>
+</svg>
+</div>
+<div style="position:absolute;top:80px;left:40px;width:100px;height:100px;border-top:1px solid var(--gold-bright);border-left:1px solid var(--gold-bright);opacity:.4"></div>
+<div style="position:absolute;top:80px;right:40px;width:100px;height:100px;border-top:1px solid var(--gold-bright);border-right:1px solid var(--gold-bright);opacity:.4"></div>
+<div style="position:absolute;bottom:40px;left:40px;width:100px;height:100px;border-bottom:1px solid var(--gold-bright);border-left:1px solid var(--gold-bright);opacity:.4"></div>
+<div style="position:absolute;bottom:40px;right:40px;width:100px;height:100px;border-bottom:1px solid var(--gold-bright);border-right:1px solid var(--gold-bright);opacity:.4"></div>
+<div style="position:relative;z-index:2;text-align:center;max-width:800px;padding:64px 24px">
+<div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:40px">
+<div style="width:60px;height:1px;background:linear-gradient(90deg,transparent,var(--gold))"></div>
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2L22 12L12 22L2 12Z" stroke="var(--gold)" stroke-width="1"/><path d="M12 6L18 12L12 18L6 12Z" stroke="var(--gold)" stroke-width="0.5" opacity="0.5"/></svg>
+<div style="width:60px;height:1px;background:linear-gradient(90deg,var(--gold),transparent)"></div>
+</div>
+<div style="font-family:var(--display);font-size:13px;color:var(--gold);letter-spacing:8px;margin-bottom:20px;font-weight:500">OPEN &middot; SOURCE &middot; CMS</div>
+<h1 style="font-family:var(--display);font-size:clamp(40px,9vw,90px);color:var(--gold-light);margin:0;letter-spacing:10px;line-height:1;font-weight:400">{{ site_nome | upper }}</h1>
+<div style="display:flex;align-items:center;justify-content:center;gap:16px;margin:28px 0">
+<div style="width:80px;height:1px;background:linear-gradient(90deg,transparent,var(--gold))"></div>
+<div class="deco-diamond"></div>
+<div style="width:80px;height:1px;background:linear-gradient(90deg,var(--gold),transparent)"></div>
+</div>
+<p style="font-family:var(--serif);font-size:clamp(16px,2vw,20px);color:var(--text2);margin:0 0 48px;line-height:1.9;font-style:italic">{{ site_descricao }}</p>
+<div style="display:flex;gap:20px;justify-content:center;flex-wrap:wrap">
+<a href="/artigos" style="font-family:var(--display);font-size:12px;padding:16px 40px;background:var(--gold);color:#0B0A08;letter-spacing:4px;font-weight:600;border:1px solid var(--gold);position:relative">
+<span style="position:absolute;top:-1px;left:-1px;width:8px;height:8px;border-top:2px solid var(--gold-light);border-left:2px solid var(--gold-light)"></span>
+<span style="position:absolute;bottom:-1px;right:-1px;width:8px;height:8px;border-bottom:2px solid var(--gold-light);border-right:2px solid var(--gold-light)"></span>
+EXPLORAR</a>
+<a href="/galeria" style="font-family:var(--display);font-size:12px;padding:16px 40px;background:transparent;color:var(--gold);border:1px solid var(--border);letter-spacing:4px;position:relative">
+<span style="position:absolute;top:-1px;left:-1px;width:8px;height:8px;border-top:2px solid var(--gold);border-left:2px solid var(--gold)"></span>
+<span style="position:absolute;bottom:-1px;right:-1px;width:8px;height:8px;border-bottom:2px solid var(--gold);border-right:2px solid var(--gold)"></span>
+GALERIAS</a>
+</div>
+<div class="term-window">
+<span class="corner term-corner-tl"></span><span class="corner term-corner-br"></span>
+<div class="term-label">&mdash; TERMINAL &mdash;</div>
+<div class="term-body">
+<span style="color:var(--green)">$</span> git clone https://github.com/RealRustCMS/RealRustCMS<br>
+<span style="color:var(--green)">$</span> cp .env.exemplo .env <span style="color:var(--text3)"># configure o banco</span><br>
+<span style="color:var(--green)">$</span> cargo run<br>
+<span style="color:var(--text3)">&rarr;</span> <span style="color:var(--green)">http://localhost:3000</span><span class="term-cursor"></span>
+</div>
+</div>
+</div>
+</section>
+
+<section style="max-width:1200px;margin:0 auto;padding:100px 24px">
+<div style="text-align:center;margin-bottom:72px">
+<div class="deco-heading">
+<span style="font-family:var(--display);font-size:12px;color:var(--gold);letter-spacing:6px;font-weight:500">RECURSOS</span>
+</div>
+<h2 style="font-family:var(--display);font-size:clamp(28px,4vw,42px);color:var(--text);margin:20px 0 0;font-weight:400;letter-spacing:3px">Por que {{ site_nome | upper }}?</h2>
+</div>
+<div class="grid-3" style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px">
+<div class="deco-border" style="padding:40px 28px;background:var(--card-bg);text-align:center">
+<div style="font-size:28px;margin-bottom:20px">&#9889;</div>
+<h3 style="font-family:var(--display);font-size:13px;color:var(--gold);margin:0 0 16px;letter-spacing:4px;font-weight:500">VELOCIDADE</h3>
+<div style="width:40px;height:1px;background:var(--gold);margin:0 auto 16px;opacity:.3"></div>
+<p style="font-family:var(--serif);font-size:14px;color:var(--text2);margin:0;line-height:1.7">Renderização server-side com Axum. Respostas em microsegundos.</p>
+</div>
+<div class="deco-border" style="padding:40px 28px;background:var(--card-bg);text-align:center">
+<div style="font-size:28px;margin-bottom:20px">&#128274;</div>
+<h3 style="font-family:var(--display);font-size:13px;color:var(--gold);margin:0 0 16px;letter-spacing:4px;font-weight:500">SEGURANÇA</h3>
+<div style="width:40px;height:1px;background:var(--gold);margin:0 auto 16px;opacity:.3"></div>
+<p style="font-family:var(--serif);font-size:14px;color:var(--text2);margin:0;line-height:1.7">Argon2id, CSRF, rate limiting, MFA com TOTP. Segurança nativa.</p>
+</div>
+<div class="deco-border" style="padding:40px 28px;background:var(--card-bg);text-align:center">
+<div style="font-size:28px;margin-bottom:20px">&#127912;</div>
+<h3 style="font-family:var(--display);font-size:13px;color:var(--gold);margin:0 0 16px;letter-spacing:4px;font-weight:500">TEMAS</h3>
+<div style="width:40px;height:1px;background:var(--gold);margin:0 auto 16px;opacity:.3"></div>
+<p style="font-family:var(--serif);font-size:14px;color:var(--text2);margin:0;line-height:1.7">Templates Tera com herança, macros e filtros customizados.</p>
+</div>
+<div class="deco-border" style="padding:40px 28px;background:var(--card-bg);text-align:center">
+<div style="font-size:28px;margin-bottom:20px">&#128248;</div>
+<h3 style="font-family:var(--display);font-size:13px;color:var(--gold);margin:0 0 16px;letter-spacing:4px;font-weight:500">GALERIAS</h3>
+<div style="width:40px;height:1px;background:var(--gold);margin:0 auto 16px;opacity:.3"></div>
+<p style="font-family:var(--serif);font-size:14px;color:var(--text2);margin:0;line-height:1.7">Álbuns com drag-and-drop, reordenação e grid masonry.</p>
+</div>
+<div class="deco-border" style="padding:40px 28px;background:var(--card-bg);text-align:center">
+<div style="font-size:28px;margin-bottom:20px">&#128269;</div>
+<h3 style="font-family:var(--display);font-size:13px;color:var(--gold);margin:0 0 16px;letter-spacing:4px;font-weight:500">BUSCA</h3>
+<div style="width:40px;height:1px;background:var(--gold);margin:0 auto 16px;opacity:.3"></div>
+<p style="font-family:var(--serif);font-size:14px;color:var(--text2);margin:0;line-height:1.7">Full-text search com PostgreSQL tsvector e ranking nativo.</p>
+</div>
+<div class="deco-border" style="padding:40px 28px;background:var(--card-bg);text-align:center">
+<div style="font-size:28px;margin-bottom:20px">&#128272;</div>
+<h3 style="font-family:var(--display);font-size:13px;color:var(--gold);margin:0 0 16px;letter-spacing:4px;font-weight:500">MEMBROS</h3>
+<div style="width:40px;height:1px;background:var(--gold);margin:0 auto 16px;opacity:.3"></div>
+<p style="font-family:var(--serif);font-size:14px;color:var(--text2);margin:0;line-height:1.7">Conteúdo restrito com OAuth/OIDC ou autenticação local.</p>
+</div>
+</div>
+</section>
+
+{% if destaque_hero %}
+<section style="max-width:1200px;margin:0 auto;padding:0 24px 60px">
+<div class="deco-heading" style="justify-content:flex-start;margin-bottom:32px">
+<span style="font-family:var(--display);font-size:11px;color:var(--gold);letter-spacing:5px">EM DESTAQUE</span>
+</div>
+<a href="/artigos/{{ destaque_hero.slug }}" class="deco-border article-card" style="display:block;max-width:820px;margin:0 auto">
+{% if destaque_hero.imagem_capa %}
+<div class="article-thumb" style="height:320px"><img src="{{ destaque_hero.imagem_capa }}" alt="{{ destaque_hero.titulo }}"></div>
+{% endif %}
+<div class="article-body">
+{% if destaque_hero.publicado_em %}<span class="article-date">{{ destaque_hero.publicado_em | date(format="%d %b %Y") | upper }}</span>{% endif %}
+<h2 class="article-titulo" style="font-size:24px;margin-top:14px">{{ destaque_hero.titulo }}</h2>
+{% if destaque_hero.resumo %}<p class="article-resumo">{{ destaque_hero.resumo }}</p>{% endif %}
+</div>
+</a>
+</section>
+{% endif %}
+
+{% if destaques_secundarios | length > 0 %}
+<section style="max-width:1200px;margin:0 auto;padding:0 24px 60px">
+<div class="grid-3" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:28px">
+{% for artigo in destaques_secundarios %}
+<a href="/artigos/{{ artigo.slug }}" class="deco-border article-card">
+{% if artigo.imagem_capa %}
+<div class="article-thumb"><img src="{{ artigo.imagem_capa }}" alt="{{ artigo.titulo }}"></div>
+{% else %}
+<div class="article-thumb"></div>
+{% endif %}
+<div class="article-body">
+{% if artigo.publicado_em %}<span class="article-date">{{ artigo.publicado_em | date(format="%d %b %Y") | upper }}</span>{% endif %}
+<h3 class="article-titulo" style="margin-top:14px">{{ artigo.titulo }}</h3>
+{% if artigo.resumo %}<p class="article-resumo">{{ artigo.resumo }}</p>{% endif %}
+</div>
+</a>
+{% endfor %}
+</div>
+</section>
+{% endif %}
+
+<section style="max-width:1200px;margin:0 auto;padding:0 24px 100px">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:52px">
+<div>
+<div class="deco-heading" style="justify-content:flex-start">
+<span style="font-family:var(--display);font-size:11px;color:var(--gold);letter-spacing:5px;font-weight:500">RECENTES</span>
+</div>
+<h2 style="font-family:var(--display);font-size:clamp(24px,3vw,36px);color:var(--text);margin:12px 0 0;font-weight:400;letter-spacing:2px">Últimos Artigos</h2>
+</div>
+<a href="/artigos" style="font-family:var(--display);font-size:11px;color:var(--gold);letter-spacing:4px">VER TODOS &rarr;</a>
+</div>
+{% if artigos | length > 0 %}
+<div class="grid-3" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:28px">
+{% for artigo in artigos | slice(end=6) %}
+<a href="/artigos/{{ artigo.slug }}" class="deco-border article-card">
+{% if artigo.imagem_capa %}
+<div class="article-thumb"><img src="{{ artigo.imagem_capa }}" alt="{{ artigo.titulo }}"></div>
+{% else %}
+<div class="article-thumb"></div>
+{% endif %}
+<div class="article-body">
+{% if artigo.publicado_em %}<span class="article-date">{{ artigo.publicado_em | date(format="%d %b %Y") | upper }}</span>{% endif %}
+<h3 class="article-titulo" style="margin-top:14px">{{ artigo.titulo }}</h3>
+{% if artigo.resumo %}<p class="article-resumo">{{ artigo.resumo }}</p>{% endif %}
+</div>
+</a>
+{% endfor %}
+</div>
+{% elif not destaque_hero %}
+<div style="text-align:center;padding:48px 0;color:var(--text3);font-family:var(--serif);font-style:italic">Nenhum artigo publicado ainda.</div>
+{% endif %}
+</section>
+
+{% if proximos_eventos | length > 0 %}
+<section style="max-width:1200px;margin:0 auto;padding:0 24px 100px">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:52px">
+<div>
+<div class="deco-heading" style="justify-content:flex-start">
+<span style="font-family:var(--display);font-size:11px;color:var(--gold);letter-spacing:5px;font-weight:500">AGENDA</span>
+</div>
+<h2 style="font-family:var(--display);font-size:clamp(24px,3vw,36px);color:var(--text);margin:12px 0 0;font-weight:400;letter-spacing:2px">Próximos Eventos</h2>
+</div>
+<a href="/eventos" style="font-family:var(--display);font-size:11px;color:var(--gold);letter-spacing:4px">VER TODOS &rarr;</a>
+</div>
+<div class="grid-3" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px">
+{% for evento in proximos_eventos %}
+<a href="/eventos/{{ evento.slug }}" class="deco-border evento-card">
+<div>
+<div class="evento-dia">{{ evento.data_hora | date(format="%d") }}</div>
+<div class="evento-mes">{{ evento.data_hora | date(format="%b") }}</div>
+</div>
+<div>
+<div style="font-family:var(--display);font-size:15px;color:var(--gold-light);margin-bottom:4px;letter-spacing:1px">{{ evento.titulo }}</div>
+<div style="font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:1px">{{ evento.data_hora | date(format="%H:%M") }}{% if evento.local %} &middot; {{ evento.local }}{% endif %}</div>
+</div>
+</a>
+{% endfor %}
+</div>
+</section>
+{% endif %}
+{% endblock %}

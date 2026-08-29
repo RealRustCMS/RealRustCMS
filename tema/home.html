@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500;600;700&family=Poiret+One&display=swap" rel="stylesheet">
+<style>
+@keyframes cursorBlink { 0%,100%{opacity:1} 50%{opacity:0} }
+@keyframes heroGlow { 0%,100%{text-shadow:0 0 20px rgba(50,205,50,.3),0 0 40px rgba(50,205,50,.1)} 50%{text-shadow:0 0 30px rgba(50,205,50,.5),0 0 60px rgba(50,205,50,.2)} }
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);transition:background .3s,color .3s;font-family:'Libre Baskerville',Georgia,serif}
+a{text-decoration:none}
+:root{--bg:#0A0A0A;--bg2:#111;--bg3:#1a1a1a;--bg4:#222;--border:rgba(255,255,255,.08);--text:#e0e0e0;--text2:#999;--text3:#666;--green:#32CD32;--green-dim:rgba(50,205,50,.15);--green-bright:rgba(50,205,50,.6);--gold:#C9A84C;--gold-dim:rgba(201,168,76,.15);--gold-bright:rgba(201,168,76,.5);--card-bg:#141414;--card-border:rgba(255,255,255,.06);--serif:'Libre Baskerville',Georgia,serif;--mono:'JetBrains Mono',monospace;--display:'Poiret One',sans-serif}
+[data-theme="light"]{--bg:#FAFAF7;--bg2:#F0EEE9;--bg3:#E8E5DD;--bg4:#DDD9CF;--border:rgba(0,0,0,.08);--text:#1a1a1a;--text2:#555;--text3:#888;--green:#1a8a1a;--green-dim:rgba(26,138,26,.1);--green-bright:rgba(26,138,26,.4);--gold:#8B7230;--gold-dim:rgba(139,114,48,.1);--gold-bright:rgba(139,114,48,.3);--card-bg:#fff;--card-border:rgba(0,0,0,.06)}
+@media(max-width:768px){.sidebar{display:none!important}.article-layout{flex-direction:column!important}.masonry{columns:2!important}.nav-links{display:none!important}.hamburger{display:flex!important}}
+@media(max-width:480px){.masonry{columns:1!important}.grid-articles{grid-template-columns:1fr!important}.grid-features{grid-template-columns:1fr!important}.grid-galleries{grid-template-columns:1fr!important}}
+</style>
+<title>RustCMS — Open Source CMS</title>
+</head>
+<body>
+<header style="position:fixed;top:0;left:0;right:0;z-index:100;background:var(--bg);border-bottom:1px solid var(--border);backdrop-filter:blur(12px);transition:background .3s">
+<div style="max-width:1200px;margin:0 auto;padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between">
+<a href="home.html" style="display:flex;align-items:center;gap:12px;color:var(--text)">
+<div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:1.5px solid var(--gold);position:relative">
+<span style="font-family:var(--mono);font-size:18px;color:var(--green);font-weight:700">></span>
+<div style="position:absolute;top:-3px;left:-3px;width:6px;height:6px;border-top:1.5px solid var(--gold);border-left:1.5px solid var(--gold)"></div>
+<div style="position:absolute;top:-3px;right:-3px;width:6px;height:6px;border-top:1.5px solid var(--gold);border-right:1.5px solid var(--gold)"></div>
+<div style="position:absolute;bottom:-3px;left:-3px;width:6px;height:6px;border-bottom:1.5px solid var(--gold);border-left:1.5px solid var(--gold)"></div>
+<div style="position:absolute;bottom:-3px;right:-3px;width:6px;height:6px;border-bottom:1.5px solid var(--gold);border-right:1.5px solid var(--gold)"></div>
+</div>
+<span style="font-family:var(--display);font-size:22px;letter-spacing:2px">RustCMS</span>
+</a>
+<nav style="display:flex;align-items:center;gap:32px" class="nav-links">
+<a href="home.html" style="font-family:var(--mono);font-size:13px;color:var(--green);letter-spacing:1px">Home</a>
+<a href="artigos.html" style="font-family:var(--mono);font-size:13px;color:var(--text2);letter-spacing:1px">Artigos</a>
+<a href="galerias.html" style="font-family:var(--mono);font-size:13px;color:var(--text2);letter-spacing:1px">Galerias</a>
+<button onclick="toggleTheme()" id="themeBtn" style="background:none;border:1px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-family:var(--mono);font-size:12px;color:var(--text2)">☀</button>
+</nav>
+</div>
+</header>
+<main style="padding-top:64px">
+<section style="min-height:90vh;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;background:var(--bg)">
+<div style="position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(50,205,50,.02) 2px,rgba(50,205,50,.02) 4px);pointer-events:none;z-index:1"></div>
+<div style="position:absolute;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:60px 60px;opacity:.4"></div>
+<div style="position:absolute;top:100px;left:40px;width:80px;height:80px;border-top:2px solid var(--gold-bright);border-left:2px solid var(--gold-bright);opacity:.3"></div>
+<div style="position:absolute;top:100px;right:40px;width:80px;height:80px;border-top:2px solid var(--gold-bright);border-right:2px solid var(--gold-bright);opacity:.3"></div>
+<div style="position:absolute;bottom:40px;left:40px;width:80px;height:80px;border-bottom:2px solid var(--gold-bright);border-left:2px solid var(--gold-bright);opacity:.3"></div>
+<div style="position:absolute;bottom:40px;right:40px;width:80px;height:80px;border-bottom:2px solid var(--gold-bright);border-right:2px solid var(--gold-bright);opacity:.3"></div>
+<div style="position:relative;z-index:2;text-align:center;max-width:800px;padding:0 24px">
+<div style="font-family:var(--mono);font-size:13px;color:var(--green);letter-spacing:4px;margin-bottom:24px;opacity:.8">OPEN SOURCE CMS</div>
+<h1 style="font-family:var(--display);font-size:clamp(48px,8vw,96px);color:var(--text);margin:0 0 8px;letter-spacing:4px;line-height:1.1;animation:heroGlow 4s ease-in-out infinite">RustCMS</h1>
+<div style="width:120px;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:24px auto"></div>
+<p style="font-family:var(--serif);font-size:clamp(16px,2vw,20px);color:var(--text2);margin:24px 0 40px;line-height:1.8">Um CMS rápido, seguro e extensível.<br>Construído com Rust, Axum e PostgreSQL.</p>
+<div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap">
+<a href="artigos.html" style="font-family:var(--mono);font-size:13px;padding:14px 32px;background:var(--green);color:#0A0A0A;border-radius:4px;font-weight:600;letter-spacing:1px;border:1px solid var(--green)">Explorar Artigos</a>
+<a href="#" style="font-family:var(--mono);font-size:13px;padding:14px 32px;background:transparent;color:var(--gold);border:1px solid var(--gold-bright);border-radius:4px;letter-spacing:1px">GitHub →</a>
+</div>
+<div style="margin-top:60px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:20px 24px;text-align:left;max-width:520px;margin-left:auto;margin-right:auto">
+<div style="display:flex;gap:8px;margin-bottom:12px">
+<div style="width:12px;height:12px;border-radius:50%;background:#ff5f57"></div>
+<div style="width:12px;height:12px;border-radius:50%;background:#febc2e"></div>
+<div style="width:12px;height:12px;border-radius:50%;background:#28c840"></div>
+</div>
+<div style="font-family:var(--mono);font-size:13px;color:var(--text2);line-height:2">
+<span style="color:var(--green)">$</span> cargo install rustcms<br>
+<span style="color:var(--green)">$</span> rustcms init meu-site<br>
+<span style="color:var(--green)">$</span> rustcms serve<br>
+<span style="color:var(--text3)">→ Servidor rodando em</span> <span style="color:var(--green)">http://localhost:3000</span><span style="display:inline-block;width:8px;height:16px;background:var(--green);margin-left:2px;animation:cursorBlink 1s step-end infinite;vertical-align:middle"></span>
+</div>
+</div>
+</div>
+</section>
+<section style="max-width:1200px;margin:0 auto;padding:100px 24px">
+<div style="text-align:center;margin-bottom:64px">
+<span style="font-family:var(--mono);font-size:12px;color:var(--gold);letter-spacing:4px">RECURSOS</span>
+<h2 style="font-family:var(--serif);font-size:clamp(28px,4vw,40px);color:var(--text);margin:16px 0 0;font-weight:400">Por que RustCMS?</h2>
+</div>
+<div class="grid-features" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:32px">
+<div style="padding:36px;background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px">
+<div style="font-family:var(--mono);font-size:28px;color:var(--green);margin-bottom:20px">⚡</div>
+<h3 style="font-family:var(--serif);font-size:20px;color:var(--text);margin:0 0 12px;font-weight:400">Blazingly Fast</h3>
+<p style="font-family:var(--serif);font-size:15px;color:var(--text2);margin:0;line-height:1.7">Renderização server-side com Axum. Respostas em microsegundos, sem overhead de runtime.</p>
+</div>
+<div style="padding:36px;background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px">
+<div style="font-family:var(--mono);font-size:28px;color:var(--green);margin-bottom:20px">🔒</div>
+<h3 style="font-family:var(--serif);font-size:20px;color:var(--text);margin:0 0 12px;font-weight:400">Seguro por Design</h3>
+<p style="font-family:var(--serif);font-size:15px;color:var(--text2);margin:0;line-height:1.7">Argon2id, CSRF protection, rate limiting, MFA com TOTP. Segurança não é add-on.</p>
+</div>
+<div style="padding:36px;background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px">
+<div style="font-family:var(--mono);font-size:28px;color:var(--green);margin-bottom:20px">🎨</div>
+<h3 style="font-family:var(--serif);font-size:20px;color:var(--text);margin:0 0 12px;font-weight:400">Temas Flexíveis</h3>
+<p style="font-family:var(--serif);font-size:15px;color:var(--text2);margin:0;line-height:1.7">Templates Tera com herança. Crie temas completos com HTML, CSS e a lógica que precisar.</p>
+</div>
+<div style="padding:36px;background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px">
+<div style="font-family:var(--mono);font-size:28px;color:var(--green);margin-bottom:20px">📸</div>
+<h3 style="font-family:var(--serif);font-size:20px;color:var(--text);margin:0 0 12px;font-weight:400">Galerias Nativas</h3>
+<p style="font-family:var(--serif);font-size:15px;color:var(--text2);margin:0;line-height:1.7">Álbuns com upload drag-and-drop, reordenação, e grid masonry. Sem plugins.</p>
+</div>
+<div style="padding:36px;background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px">
+<div style="font-family:var(--mono);font-size:28px;color:var(--green);margin-bottom:20px">🔍</div>
+<h3 style="font-family:var(--serif);font-size:20px;color:var(--text);margin:0 0 12px;font-weight:400">Full-Text Search</h3>
+<p style="font-family:var(--serif);font-size:15px;color:var(--text2);margin:0;line-height:1.7">Busca integrada com PostgreSQL tsvector. Relevância, stemming e ranking nativos.</p>
+</div>
+<div style="padding:36px;background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px">
+<div style="font-family:var(--mono);font-size:28px;color:var(--green);margin-bottom:20px">🔐</div>
+<h3 style="font-family:var(--serif);font-size:20px;color:var(--text);margin:0 0 12px;font-weight:400">Área de Membros</h3>
+<p style="font-family:var(--serif);font-size:15px;color:var(--text2);margin:0;line-height:1.7">Conteúdo restrito com login OAuth/OIDC ou local. Gerencie acesso por artigo.</p>
+</div>
+</div>
+</section>
+<section style="max-width:1200px;margin:0 auto;padding:0 24px 100px">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:48px">
+<div>
+<span style="font-family:var(--mono);font-size:12px;color:var(--gold);letter-spacing:4px">RECENTES</span>
+<h2 style="font-family:var(--serif);font-size:clamp(24px,3vw,36px);color:var(--text);margin:12px 0 0;font-weight:400">Últimos Artigos</h2>
+</div>
+<a href="artigos.html" style="font-family:var(--mono);font-size:13px;color:var(--green);letter-spacing:1px">Ver todos →</a>
+</div>
+<div class="grid-articles" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:28px">
+<article style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px;overflow:hidden;transition:border-color .3s,transform .3s">
+<a href="artigo.html" style="color:inherit">
+<div style="height:180px;background:linear-gradient(135deg,#1a2a1a,#0d1f0d);position:relative">
+<div style="position:absolute;bottom:12px;left:12px;display:flex;gap:8px">
+<span style="font-family:var(--mono);font-size:11px;background:var(--green-dim);color:var(--green);padding:4px 10px;border-radius:3px;backdrop-filter:blur(8px)">Arquitetura</span>
+</div>
+</div>
+<div style="padding:24px">
+<div style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-bottom:8px;letter-spacing:1px">15 AGO 2025</div>
+<h3 style="font-family:var(--serif);font-size:18px;color:var(--text);margin:0 0 10px;font-weight:400;line-height:1.4">Arquitetura do RustCMS: Do Request à Resposta</h3>
+<p style="font-family:var(--serif);font-size:14px;color:var(--text2);margin:0;line-height:1.6">Como o Axum roteia, autentica e renderiza cada página do seu site.</p>
+</div>
+</a>
+</article>
+<article style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px;overflow:hidden;transition:border-color .3s,transform .3s">
+<a href="artigo.html" style="color:inherit">
+<div style="height:180px;background:linear-gradient(135deg,#1a1a2a,#0d0d1f);position:relative">
+<div style="position:absolute;bottom:12px;left:12px;display:flex;gap:8px">
+<span style="font-family:var(--mono);font-size:11px;background:var(--green-dim);color:var(--green);padding:4px 10px;border-radius:3px;backdrop-filter:blur(8px)">Auth</span>
+</div>
+</div>
+<div style="padding:24px">
+<div style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-bottom:8px;letter-spacing:1px">10 AGO 2025</div>
+<h3 style="font-family:var(--serif);font-size:18px;color:var(--text);margin:0 0 10px;font-weight:400;line-height:1.4">Configurando OAuth/OIDC no RustCMS</h3>
+<p style="font-family:var(--serif);font-size:14px;color:var(--text2);margin:0;line-height:1.6">Login com Google, GitHub ou qualquer provider OpenID Connect.</p>
+</div>
+</a>
+</article>
+<article style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px;overflow:hidden;transition:border-color .3s,transform .3s">
+<a href="artigo.html" style="color:inherit">
+<div style="height:180px;background:linear-gradient(135deg,#2a1a1a,#1f0d0d);position:relative">
+<div style="position:absolute;bottom:12px;left:12px;display:flex;gap:8px">
+<span style="font-family:var(--mono);font-size:11px;background:var(--green-dim);color:var(--green);padding:4px 10px;border-radius:3px;backdrop-filter:blur(8px)">PostgreSQL</span>
+</div>
+</div>
+<div style="padding:24px">
+<div style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-bottom:8px;letter-spacing:1px">05 AGO 2025</div>
+<h3 style="font-family:var(--serif);font-size:18px;color:var(--text);margin:0 0 10px;font-weight:400;line-height:1.4">Full-Text Search com PostgreSQL</h3>
+<p style="font-family:var(--serif);font-size:14px;color:var(--text2);margin:0;line-height:1.6">Busca relevante usando tsvector, ranking e stemming nativo.</p>
+</div>
+</a>
+</article>
+</div>
+</section>
+</main>
+<footer style="background:var(--bg2);border-top:1px solid var(--border);padding:48px 24px">
+<div style="max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px">
+<div style="display:flex;align-items:center;gap:12px">
+<span style="font-family:var(--display);font-size:18px;color:var(--text);letter-spacing:2px">RustCMS</span>
+<span style="font-family:var(--mono);font-size:11px;color:var(--text3)">v4.0</span>
+</div>
+<div style="font-family:var(--mono);font-size:11px;color:var(--text3);display:flex;gap:24px">
+<a href="#" style="color:var(--text3)">GitHub</a>
+<a href="#" style="color:var(--text3)">Docs</a>
+<a href="#" style="color:var(--text3)">Licença MIT</a>
+</div>
+<div style="font-family:var(--mono);font-size:11px;color:var(--text3)">
+Feito com <span style="color:var(--green)">Rust</span> + <span style="color:var(--gold)">Axum</span>
+</div>
+</div>
+</footer>
+<script>
+function toggleTheme(){
+var t=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';
+document.documentElement.setAttribute('data-theme',t);
+localStorage.setItem('rustcms-theme-mode',t);
+document.getElementById('themeBtn').textContent=t==='dark'?'☀':'☾';
+}
+(function(){var s=localStorage.getItem('rustcms-theme-mode');if(s){document.documentElement.setAttribute('data-theme',s);if(s==='light')document.getElementById('themeBtn').textContent='☾';}})();
+</script>
+</body>
+</html>

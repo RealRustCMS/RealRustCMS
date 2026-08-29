@@ -1,0 +1,61 @@
+{% extends "publico/base.html" %}
+
+{% block titulo %}{% if pagina.titulo_seo %}{{ pagina.titulo_seo }}{% else %}{{ pagina.titulo }}{% endif %} — {{ site_nome }}{% endblock %}
+
+{% block meta_seo %}
+<meta name="description" content="{{ site_descricao }}">
+<link rel="canonical" href="{{ base_url }}/paginas/{{ pagina.slug }}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{% if pagina.titulo_seo %}{{ pagina.titulo_seo }}{% else %}{{ pagina.titulo }}{% endif %}">
+<meta property="og:description" content="{{ site_descricao }}">
+<meta property="og:url" content="{{ base_url }}/paginas/{{ pagina.slug }}">
+<meta property="og:site_name" content="{{ site_nome }}">
+{% endblock %}
+
+{% block estilos %}
+  .pagina-titulo { font-size: 28px; font-weight: 600; letter-spacing: -.6px; line-height: 1.25; margin-bottom: 32px; }
+  .pagina-corpo { font-size: 15.5px; line-height: 1.75; color: var(--text-secondary); max-width: 680px; }
+  .pagina-corpo p { margin-bottom: 1.2em; }
+  .pagina-corpo h2, .pagina-corpo h3 { color: var(--text-primary); margin: 1.6em 0 .5em; letter-spacing: -.3px; }
+  .pagina-corpo h2 { font-size: 21px; }
+  .pagina-corpo h3 { font-size: 17px; }
+  .pagina-corpo a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+  .pagina-corpo ul, .pagina-corpo ol { padding-left: 1.4em; margin-bottom: 1.2em; }
+  .pagina-corpo li { margin-bottom: .4em; }
+  .pagina-corpo blockquote { border-left: 3px solid var(--accent); padding-left: 16px; color: var(--text-muted); font-style: italic; margin: 1.2em 0; }
+{% endblock %}
+
+{% block fullpage %}
+{% if pagina.html_bruto %}
+{{ pagina.html_bruto | safe }}
+{% else %}
+<header class="site-header">
+  <div class="header-inner">
+    <a href="/" class="site-name">
+      {% if site_logo %}
+      <img src="{{ site_logo }}" alt="{{ site_nome }}" style="width:28px; height:28px; border-radius:6px; object-fit:cover;">
+      {% endif %}
+      {{ site_nome }}
+    </a>
+    <nav class="header-nav">
+      {% for item in menu %}
+      {{ self::nav_item(item=item) }}
+      {% endfor %}
+    </nav>
+    <form method="get" action="/busca" style="display:flex; gap:6px;">
+      <input type="text" name="q" placeholder="Buscar..." style="padding:6px 10px; border:1px solid var(--border); border-radius:6px; font-size:13px; font-family:'DM Sans',sans-serif; outline:none; width:160px;">
+      <button type="submit" style="padding:6px 12px; background:var(--accent); color:#fff; border:none; border-radius:6px; font-size:13px; cursor:pointer;">→</button>
+    </form>
+  </div>
+</header>
+<div class="container">
+  <h1 class="pagina-titulo">{{ pagina.titulo }}</h1>
+  <div class="pagina-corpo">
+    {{ pagina.corpo | safe }}
+  </div>
+</div>
+<footer class="site-footer">
+  {{ site_nome }} · {{ site_descricao }}
+</footer>
+{% endif %}
+{% endblock fullpage %}

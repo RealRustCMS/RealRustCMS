@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block titulo %}{{ album.titulo }}{% endblock %}
+
+{% block estilos %}
+<style>
+  .fotos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-top: 22px; }
+  .foto-card { position: relative; border-radius: 8px; overflow: hidden; aspect-ratio: 1; background: var(--bg-elevated); }
+  .foto-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .foto-overlay { position: absolute; inset: 0; background: rgba(0,0,0,.5); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity .2s; }
+  .foto-card:hover .foto-overlay { opacity: 1; }
+  .upload-area { display: block; border: 2px dashed var(--border-strong); border-radius: 10px; padding: 32px; text-align: center; cursor: pointer; transition: border-color .2s, background .2s; color: var(--text-muted); font-size: 13.5px; }
+  .upload-area:hover { border-color: var(--accent); background: var(--accent-muted); }
+  .upload-area svg { margin-bottom: 8px; color: var(--text-muted); }
+  .vazio { text-align: center; padding: 48px 0; color: var(--text-muted); }
+  #upload-progress { margin-top: 12px; font-size: 13px; color: var(--accent); min-height: 20px; }
+</style>
+{% endblock %}
+
+{% block topbar_acoes %}
+<a href="/admin/galeria" class="btn btn-secondary">← Voltar</a>
+{% endblock %}
+
+{% block conteudo %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{{ album.titulo }}</h1>
+    <p class="page-sub">{{ total_fotos }} foto{% if total_fotos != 1 %}s{% endif %}</p>
+  </div>
+</div>
+
+{% if usuario_papel == "admin" or (usuario_papel == "editor" and foto.criado_por and foto.criado_por == usuario_id) %}
+<label for="input-fotos" class="upload-area">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="32" height="32"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+  <div>Clique para enviar fotos</div>
+  <div style="font-size:11.5px; margin-top:4px">JPG, PNG, GIF, WebP</div>
+</label>
+<input type="file" id="input-fotos" accept="image/*" multiple style="position:absolute;left:-9999px;">
+<div id="upload-progress"></div>
+{% endif %}
+
+{% if total_fotos == 0 %}
+<div class="vazio">Nenhuma foto ainda. Envie a primeira acima.</div>
+{% else %}
+<div class="fotos-grid" id="fotos-grid">
+  {% for foto in fotos %}
+  <div class="foto-card">
+    <img src="{{ foto.url }}" alt="{{ foto.legenda | default(value='') }}">
+    <div class="foto-overlay">
+        {% if usuario_papel == "admin" or (usuario_papel == "editor" and foto.criado_por and foto.criado_por == usuario_id) %}
+        <form method="post" action="/admin/galeria/fotos/{{ foto.id }}/deletar" onsubmit="return confirm('Deletar foto?')">
+          <button type="submit" class="btn btn-danger btn-sm">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3,6 5,6 21,6"/><path d="M19,6l-1,14a2,2,0,0,1-2,2H8a2,2,0,0,1-2-2L5,6"/></svg>
+          </button>
+        </form>
+        {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<script>
+var albumId = "{{ album.id }}";
+var inputFotos = document.getElementById('input-fotos');
+var progress = document.getElementById('upload-progress');
+var albumId = "{{ album.id }}";
+var csrfToken = "{{ csrf_token }}";
+console.log('CSRF token:', csrfToken);
+
+document.querySelector('.upload-area').addEventListener('click', function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  inputFotos.click();
+});
+
+inputFotos.addEventListener('change', function() {
+  var arquivos = Array.from(inputFotos.files);
+  if (!arquivos.length) return;
+  progress.textContent = 'Enviando...';
+
+  var grid = document.getElementById('fotos-grid');
+  if (!grid) {
+    var vazio = document.querySelector('.vazio');
+    if (vazio) vazio.remove();
+    grid = document.createElement('div');
+    grid.id = 'fotos-grid';
+    grid.className = 'fotos-grid';
+    document.querySelector('.page').appendChild(grid);
+  }
+
+  var i = 0;
+  function enviarProximo() {
+    if (i >= arquivos.length) {
+      progress.textContent = 'Concluido!';
+      setTimeout(function() { progress.textContent = ''; }, 2000);
+      inputFotos.value = '';
+      return;
+    }
+    var fd = new FormData();
+    fd.append('imagem', arquivos[i]);
+    fd.append('album_id', albumId);
+
+    fetch('/admin/upload/imagem', { method: 'POST', body: fd })
+      .then(function(r) { return r.json(); })
+      .then(function(dados) {
+        if (dados.url) {
+          var div = document.createElement('div');
+          div.className = 'foto-card';
+          var img = document.createElement('img');
+          img.src = dados.url;
+          img.alt = '';
+          div.appendChild(img);
+          grid.prepend(div);
+
+          // Atualiza o contador
+          var sub = document.querySelector('.page-sub');
+          if (sub) {
+            var total = grid.querySelectorAll('.foto-card').length;
+            sub.textContent = total + (total === 1 ? ' foto' : ' fotos');
+          }
+        } else {
+          // Mostra erro estilizado em vez de alert
+          progress.style.color = 'var(--danger)';
+          progress.textContent = dados.erro || 'Erro desconhecido no upload.';
+          setTimeout(function() {
+            progress.style.color = 'var(--accent)';
+            progress.textContent = '';
+          }, 4000);
+          inputFotos.value = '';
+          return;
+        }
+        i++;
+        progress.textContent = 'Enviando ' + i + ' de ' + arquivos.length + '...';
+        enviarProximo();
+      });
+  }
+  enviarProximo();
+});
+</script>
+{% endblock %}

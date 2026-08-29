@@ -1,0 +1,60 @@
+{% extends "publico/base.html" %}
+
+{% block titulo %}Eventos — {{ site_nome }}{% endblock %}
+
+{% block estilos %}
+<style>
+    .page-titulo { font-size: 24px; font-weight: 600; letter-spacing: -0.5px; margin-bottom: 32px; }
+    .eventos-grid { display: flex; flex-direction: column; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .evento-card { background: var(--bg-surface); padding: 22px 24px; text-decoration: none; display: flex; align-items: center; gap: 20px; transition: background 0.15s; }
+    .evento-card:hover { background: var(--row-hover); }
+    .evento-card-data { flex-shrink: 0; width: 56px; text-align: center; }
+    .evento-card-dia { font-size: 20px; font-weight: 700; color: var(--accent); font-family: "DM Mono", monospace; line-height: 1; }
+    .evento-card-mes { font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-top: 2px; }
+    .evento-card-conteudo { flex: 1; min-width: 0; }
+    .evento-card-titulo { font-size: 16px; font-weight: 500; color: var(--text-primary); margin-bottom: 4px; }
+    .evento-card-meta { font-size: 13px; color: var(--text-muted); }
+    .vazio { text-align: center; padding: 64px 0; color: var(--text-muted); font-size: 14px; }
+</style>
+{% endblock %}
+
+{% block conteudo %}
+<h1 class="page-titulo">Eventos</h1>
+
+{% if eventos | length > 0 %}
+<div class="eventos-grid">
+    {% for evento in eventos %}
+    <a href="/eventos/{{ evento.slug }}" class="evento-card">
+        <div class="evento-card-data">
+            <div class="evento-card-dia">{{ evento.data_hora | date(format="%d") }}</div>
+            <div class="evento-card-mes">{{ evento.data_hora | date(format="%b") }}</div>
+        </div>
+        <div class="evento-card-conteudo">
+            <div class="evento-card-titulo">{{ evento.titulo }}</div>
+            <div class="evento-card-meta">
+                {{ evento.data_hora | date(format="%H:%M") }}
+                {% if evento.local %}· {{ evento.local }}{% endif %}
+            </div>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% if paginacao.total_paginas > 1 %}
+<div style="margin-top:32px; display:flex; align-items:center; justify-content:space-between;">
+  <span style="font-size:12.5px; color:var(--text-muted)">
+    Página {{ paginacao.pagina_atual }} de {{ paginacao.total_paginas }}
+  </span>
+  <div style="display:flex; gap:8px;">
+    {% if paginacao.tem_anterior %}
+    <a href="?pagina={{ paginacao.pagina_anterior }}" style="color:var(--accent); font-size:13.5px; text-decoration:none;">← Anterior</a>
+    {% endif %}
+    {% if paginacao.tem_proxima %}
+    <a href="?pagina={{ paginacao.proxima_pagina }}" style="color:var(--accent); font-size:13.5px; text-decoration:none;">Próxima →</a>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% else %}
+<div class="vazio">Nenhum evento publicado ainda.</div>
+{% endif %}
+{% endblock %}

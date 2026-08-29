@@ -1,0 +1,53 @@
+{% extends "publico/base.html" %}
+
+{% block titulo %}{{ evento.titulo }} — {{ site_nome }}{% endblock %}
+
+{% block meta_seo %}
+<meta name="description" content="{% if evento.descricao %}{{ evento.descricao }}{% else %}{{ site_descricao }}{% endif %}">
+<link rel="canonical" href="{{ base_url }}/eventos/{{ evento.slug }}">
+<meta property="og:type" content="article">
+<meta property="og:title" content="{{ evento.titulo }}">
+<meta property="og:description" content="{% if evento.descricao %}{{ evento.descricao }}{% else %}{{ site_descricao }}{% endif %}">
+<meta property="og:url" content="{{ base_url }}/eventos/{{ evento.slug }}">
+{% if evento.imagem_capa %}<meta property="og:image" content="{{ base_url }}{{ evento.imagem_capa }}">{% endif %}
+<meta property="og:site_name" content="{{ site_nome }}">
+{% endblock %}
+
+{% block estilos %}
+<style>
+  .evento-header { margin-bottom: 32px; }
+  .evento-titulo { font-size: 28px; font-weight: 600; letter-spacing: -.6px; line-height: 1.25; margin-bottom: 12px; }
+  .evento-meta { font-size: 13.5px; color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .evento-corpo { font-size: 15.5px; line-height: 1.75; color: var(--text-secondary); max-width: 680px; white-space: pre-line; }
+  .voltar { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--accent); text-decoration: none; margin-bottom: 32px; }
+  .voltar:hover { color: var(--accent-hover); }
+  .btn-link-detalhes { display: inline-block; margin-top: 24px; background: var(--accent); color: #fff; padding: 10px 20px; border-radius: 7px; font-size: 14px; font-weight: 500; text-decoration: none; }
+  .btn-link-detalhes:hover { background: var(--accent-hover); }
+</style>
+{% endblock %}
+
+{% block conteudo %}
+<a href="/eventos" class="voltar">← Todos os eventos</a>
+
+<div class="evento-header">
+  <h1 class="evento-titulo">{{ evento.titulo }}</h1>
+  <p class="evento-meta">
+    <span>{{ evento.data_hora | date(format="%d/%m/%Y às %H:%M") }}</span>
+    {% if evento.local %}<span>· {{ evento.local }}</span>{% endif %}
+  </p>
+</div>
+
+{% if evento.imagem_capa %}
+<div style="max-width:680px; margin-bottom:32px;">
+  <img src="{{ evento.imagem_capa }}" alt="{{ evento.titulo }}" style="width:100%; border-radius:10px; border:1px solid var(--border);">
+</div>
+{% endif %}
+
+{% if evento.descricao %}
+<div class="evento-corpo">{{ evento.descricao }}</div>
+{% endif %}
+
+{% if evento.link_detalhes %}
+<a href="{{ evento.link_detalhes }}" class="btn-link-detalhes" target="_blank" rel="noopener">Mais informações →</a>
+{% endif %}
+{% endblock %}

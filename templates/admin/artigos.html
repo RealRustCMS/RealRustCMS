@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+
+{% block estilos %}
+<style>
+.btn-estrela {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 5px;
+  color: var(--border-strong);
+  transition: color .15s, background .15s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-estrela:hover { color: #e6a817; background: #fff8e6; }
+.btn-estrela.ativo { color: #e6a817; }
+.btn-estrela.ativo:hover { color: #c48a00; }
+
+.filtros {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.filtros select,
+.filtros input[type="text"] {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  outline: none;
+  height: 32px;
+}
+.filtros select:focus,
+.filtros input[type="text"]:focus { border-color: var(--accent); }
+.filtros input[type="text"] { width: 200px; }
+.filtro-ativo { background: var(--accent-muted) !important; border-color: var(--accent) !important; }
+
+.bulk-bar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 12px 18px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-elevated);
+}
+.bulk-bar select {
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  height: 32px;
+  outline: none;
+}
+.bulk-count {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-left: 4px;
+}
+input[type="checkbox"] { cursor: pointer; accent-color: var(--accent); }
+</style>
+{% endblock %}
+
+{% block titulo %}Artigos{% endblock %}
+
+{% block topbar_acoes %}
+<a href="/admin/artigos/novo" class="btn btn-primary">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  Novo Artigo
+</a>
+{% endblock %}
+
+{% block conteudo %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Artigos</h1>
+    <p class="page-sub">{{ total_artigos }} artigo{% if total_artigos != 1 %}s{% endif %} encontrado{% if total_artigos != 1 %}s{% endif %}</p>
+  </div>
+</div>
+
+{# ── Filtros (form GET separado do bulk) ─────────────────────────────────── #}
+<div class="card" style="margin-bottom: 0; border-bottom: none; border-radius: 10px 10px 0 0;">
+  <form method="get" action="/admin/artigos" class="filtros">
+    <input
+      type="text"
+      name="busca"
+      placeholder="Buscar por título..."
+      value="{{ filtro_busca | default(value='') }}"
+      {% if filtro_busca %}class="filtro-ativo"{% endif %}
+    >
+    <select name="status" {% if filtro_status %}class="filtro-ativo"{% endif %}>
+      <option value="">Todos os status</option>
+      <option value="publicado" {% if filtro_status == "publicado" %}selected="selected"{% endif %}>Publicado</option>
+      <option value="rascunho"  {% if filtro_status == "rascunho"  %}selected="selected"{% endif %}>Rascunho</option>
+    </select>
+    <select name="categoria_id" {% if filtro_categoria %}class="filtro-ativo"{% endif %}>
+      <option value="">Todas as categorias</option>
+      {% for cat in categorias %}
+      <option value="{{ cat.id }}" {% if filtro_categoria == cat.id %}selected="selected"{% endif %}>{{ cat.nome }}</option>
+      {% endfor %}
+    </select>
+    <select name="ordenar" {% if filtro_ordenar %}class="filtro-ativo"{% endif %}>
+      <option value="data_desc" {% if filtro_ordenar == "data_desc" or not filtro_ordenar %}selected="selected"{% endif %}>Mais recentes</option>
+      <option value="data_asc"  {% if filtro_ordenar == "data_asc"  %}selected="selected"{% endif %}>Mais antigos</option>
+      <option value="titulo"    {% if filtro_ordenar == "titulo"    %}selected="selected"{% endif %}>Título A–Z</option>
+    </select>
+    <button type="submit" class="btn btn-secondary" style="height:32px; padding: 0 12px;">Filtrar</button>
+    {% if filtro_status or filtro_categoria or filtro_busca or filtro_ordenar %}
+    <a href="/admin/artigos" class="btn btn-secondary" style="height:32px; padding: 0 12px; color: var(--danger);">✕ Limpar</a>
+    {% endif %}
+  </form>
+</div>
+
+{# ── Tabela + bulk num único form POST ───────────────────────────────────── #}
+<form method="post" action="/admin/artigos/bulk" id="form-bulk">
+  <div class="card" style="border-radius: 0 0 10px 10px; border-top: none;">
+    <div class="tw">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:36px">
+              <input type="checkbox" id="sel-todos" title="Selecionar todos">
+            </th>
+            <th>Título</th>
+            <th>Status</th>
+            <th>Destaque</th>
+            <th>Data</th>
+            <th style="text-align:right">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for artigo in artigos %}
+          <tr>
+            <td>
+              <input type="checkbox" name="ids[]" value="{{ artigo.id }}" class="cb-artigo">
+            </td>
+            <td>
+              <a href="/admin/artigos/{{ artigo.id }}/editar" class="art-title">{{ artigo.titulo }}</a>
+            </td>
+            <td>
+              {% if artigo.status == "publicado" %}
+                <span class="badge badge-pub"><span class="badge-dot"></span>Publicado</span>
+              {% else %}
+                <span class="badge badge-draft"><span class="badge-dot"></span>Rascunho</span>
+              {% endif %}
+            </td>
+            <td>
+              <button
+                class="btn-estrela{% if artigo.destaque %} ativo{% endif %}"
+                data-id="{{ artigo.id }}"
+                title="{% if artigo.destaque %}Remover destaque{% else %}Colocar em destaque{% endif %}"
+                aria-label="Toggle destaque"
+                type="button">
+                <svg viewBox="0 0 24 24" fill="{% if artigo.destaque %}currentColor{% else %}none{% endif %}" stroke="currentColor" stroke-width="2" width="16" height="16"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
+              </button>
+            </td>
+            <td class="muted mono tsm">{{ artigo.criado_em | date(format="%d/%m/%Y") }}</td>
+            <td>
+              <div class="acts">
+                {% if usuario_papel == "admin" or (usuario_papel == "editor" and artigo.autor_id == usuario_id) %}
+                <a href="/admin/artigos/{{ artigo.id }}/editar" class="btn btn-secondary btn-sm">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </a>
+                {% endif %}
+                {% if usuario_papel == "admin" or (usuario_papel == "editor" and artigo.autor_id == usuario_id) %}
+                <button type="button" class="btn btn-danger btn-sm btn-del" data-action="/admin/artigos/{{ artigo.id }}/deletar">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3,6 5,6 21,6"/><path d="M19,6l-1,14a2,2,0,0,1-2,2H8a2,2,0,0,1-2-2L5,6"/></svg>
+                </button>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+          {% if total_artigos == 0 %}
+          <tr>
+            <td colspan="6" style="text-align:center; color:var(--text-muted); padding: 32px;">
+              {% if filtro_status or filtro_categoria or filtro_busca %}
+                Nenhum artigo encontrado com esses filtros. <a href="/admin/artigos" style="color:var(--accent)">Limpar filtros</a>
+              {% else %}
+                Nenhum artigo ainda. <a href="/admin/artigos/novo" style="color:var(--accent)">Criar o primeiro</a>
+              {% endif %}
+            </td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+    {# ── Paginação ───────────────────────────────────────────────────────── #}
+    {% if paginacao.total_paginas > 1 %}
+    {% set qs_filtros = "" %}
+    {% if filtro_status    %}{% set qs_filtros = qs_filtros ~ "&status="       ~ filtro_status    %}{% endif %}
+    {% if filtro_categoria %}{% set qs_filtros = qs_filtros ~ "&categoria_id=" ~ filtro_categoria %}{% endif %}
+    {% if filtro_busca     %}{% set qs_filtros = qs_filtros ~ "&busca="        ~ filtro_busca     %}{% endif %}
+    {% if filtro_ordenar   %}{% set qs_filtros = qs_filtros ~ "&ordenar="      ~ filtro_ordenar   %}{% endif %}
+
+    <div style="padding:14px 18px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between;">
+      <span style="font-size:12px; color:var(--text-muted)">
+        {{ paginacao.total_itens }} artigo{% if paginacao.total_itens != 1 %}s{% endif %} —
+        página {{ paginacao.pagina_atual }} de {{ paginacao.total_paginas }}
+      </span>
+      <div style="display:flex; gap:6px;">
+        {% if paginacao.tem_anterior %}
+        <a href="/admin/artigos?pagina={{ paginacao.pagina_anterior }}{{ qs_filtros }}" class="btn btn-secondary btn-sm">← Anterior</a>
+        {% endif %}
+        {% if paginacao.tem_proxima %}
+        <a href="/admin/artigos?pagina={{ paginacao.proxima_pagina }}{{ qs_filtros }}" class="btn btn-secondary btn-sm">Próxima →</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    {# ── Bulk bar ────────────────────────────────────────────────────────── #}
+    {% if usuario_papel == "admin" or usuario_papel == "editor" %}
+    <div class="bulk-bar" id="bulk-bar" style="display:none;">
+      <select name="acao">
+        <option value="publicar">Publicar selecionados</option>
+        <option value="despublicar">Despublicar selecionados</option>
+      </select>
+      <button type="submit" class="btn btn-primary btn-sm">Aplicar</button>
+      <span class="bulk-count" id="bulk-count"></span>
+    </div>
+    {% endif %}
+  </div>
+</form>
+
+{# Form oculto para deleção individual — fora do form-bulk para não aninhar forms #}
+<form method="post" id="form-del" style="display:none;">
+</form>
+
+<script>
+// ── Selecionar todos ─────────────────────────────────────────────────────────
+const selTodos = document.getElementById('sel-todos');
+const checkboxes = document.querySelectorAll('.cb-artigo');
+const bulkBar = document.getElementById('bulk-bar');
+const bulkCount = document.getElementById('bulk-count');
+
+function atualizarBulkBar() {
+  const selecionados = document.querySelectorAll('.cb-artigo:checked').length;
+  if (bulkBar) {
+    bulkBar.style.display = selecionados > 0 ? 'flex' : 'none';
+    bulkCount.textContent = selecionados + ' selecionado' + (selecionados !== 1 ? 's' : '');
+  }
+  if (selTodos) {
+    selTodos.checked = selecionados === checkboxes.length && checkboxes.length > 0;
+    selTodos.indeterminate = selecionados > 0 && selecionados < checkboxes.length;
+  }
+}
+
+if (selTodos) {
+  selTodos.addEventListener('change', () => {
+    checkboxes.forEach(cb => cb.checked = selTodos.checked);
+    atualizarBulkBar();
+  });
+}
+checkboxes.forEach(cb => cb.addEventListener('change', atualizarBulkBar));
+
+// ── Deleção individual via form oculto ───────────────────────────────────────
+const formDel = document.getElementById('form-del');
+document.querySelectorAll('.btn-del').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (!confirm('Deletar este artigo?')) return;
+    formDel.action = btn.dataset.action;
+    formDel.submit();
+  });
+});
+
+// ── Toggle destaque ──────────────────────────────────────────────────────────
+document.querySelectorAll('.btn-estrela').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const id = btn.dataset.id;
+    const res = await fetch(`/admin/artigos/${id}/destaque`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (!res.ok) return;
+    const { destaque } = await res.json();
+    const svg = btn.querySelector('svg');
+    if (destaque) {
+      btn.classList.add('ativo');
+      svg.setAttribute('fill', 'currentColor');
+      btn.title = 'Remover destaque';
+    } else {
+      btn.classList.remove('ativo');
+      svg.setAttribute('fill', 'none');
+      btn.title = 'Colocar em destaque';
+    }
+  });
+});
+</script>
+{% endblock %}

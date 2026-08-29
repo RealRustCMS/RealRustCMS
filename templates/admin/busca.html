@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block titulo %}Busca{% endblock %}
+
+{% block estilos %}
+<style>
+  .busca-form { display: flex; gap: 8px; max-width: 560px; margin-bottom: 24px; }
+  .busca-form input { flex: 1; padding: 9px 12px; border: 1px solid var(--border); border-radius: 7px; font-size: 13.5px; font-family: 'DM Sans', sans-serif; outline: none; }
+  .busca-form input:focus { border-color: var(--accent); }
+  .resultado-tipo-artigo-publicado { color: var(--badge-pub-text); }
+  .resultado-tipo-artigo-rascunho  { color: var(--badge-draft-txt); }
+  .resultado-tipo-album            { color: var(--accent); }
+  .resultado-trecho { font-size: 12px; color: var(--text-muted); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 500px; }
+</style>
+{% endblock %}
+
+{% block conteudo %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Busca</h1>
+    {% if termo %}
+    <p class="page-sub">{{ total }} resultado{% if total != 1 %}s{% endif %} para "{{ termo }}"</p>
+    {% endif %}
+  </div>
+</div>
+
+<form class="busca-form" method="get" action="/admin/busca">
+  <input type="text" name="q" value="{{ termo }}" placeholder="Buscar artigos, páginas e álbuns..." autofocus>
+  <button type="submit" class="btn btn-primary">Buscar</button>
+</form>
+
+<div class="card">
+  <div class="tw">
+    <table>
+      <thead>
+        <tr>
+          <th>Título</th>
+          <th>Tipo</th>
+          <th>Trecho</th>
+          <th style="text-align:right">Ação</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in resultados %}
+        <tr>
+          <td style="font-weight:500; color:var(--text-primary)">{{ r.titulo }}</td>
+          <td>
+            {% if r.tipo == "artigo:publicado" %}
+              <span class="badge badge-pub"><span class="badge-dot"></span>Artigo</span>
+            {% elif r.tipo == "artigo:rascunho" %}
+              <span class="badge badge-draft"><span class="badge-dot"></span>Rascunho</span>
+            {% elif r.tipo == "pagina:publicada" %}
+              <span class="badge" style="background:#e8f0fe;color:#1a56cc;border:1px solid #b8d0f8"><span class="badge-dot"></span>Página</span>
+            {% elif r.tipo == "pagina:rascunho" %}
+              <span class="badge badge-draft"><span class="badge-dot"></span>Pág. rascunho</span>
+            {% else %}
+              <span class="badge" style="background:var(--accent-muted);color:var(--accent)"><span class="badge-dot"></span>Álbum</span>
+            {% endif %}
+          </td>
+          <td><div class="resultado-trecho">{{ r.descricao | default(value="—") }}</div></td>
+          <td style="text-align:right">
+              {% if r.tipo == "artigo:publicado" or r.tipo == "artigo:rascunho" %}
+              <a href="/admin{{ r.url }}/editar" class="btn btn-secondary btn-sm">Abrir</a>
+              {% elif r.tipo == "pagina:publicada" or r.tipo == "pagina:rascunho" %}
+              <a href="/admin{{ r.url }}/editar" class="btn btn-secondary btn-sm">Abrir</a>
+              {% else %}
+              <a href="/admin{{ r.url }}" class="btn btn-secondary btn-sm">Abrir</a>
+              {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+        {% if termo and total == 0 %}
+        <tr>
+          <td colspan="4" style="text-align:center; color:var(--text-muted); padding:32px;">
+            Nenhum resultado para "{{ termo }}".
+          </td>
+        </tr>
+        {% endif %}
+        {% if not termo %}
+        <tr>
+          <td colspan="4" style="text-align:center; color:var(--text-muted); padding:32px;">
+            Digite um termo acima para buscar.
+          </td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

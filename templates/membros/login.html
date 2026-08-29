@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Login — Área de Membros — {{ site_nome }}</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="/static/css/temas/{{ tema }}.css">
+        <style>
+            *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+            body {
+                font-family: 'DM Sans', sans-serif;
+                background: var(--bg-page);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 100vh;
+            }
+            .card {
+                background: var(--bg-surface);
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                padding: 36px 32px;
+                width: 100%;
+                max-width: 360px;
+                box-shadow: 0 4px 24px var(--accent-shadow);
+            }
+            .logo-wrap {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 24px;
+            }
+            .logo-mark {
+                width: 32px;
+                height: 32px;
+                background: var(--accent);
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 14px;
+                font-weight: 700;
+                color: #fff;
+                flex-shrink: 0;
+            }
+            h1 {
+                font-size: 16px;
+                font-weight: 600;
+                color: var(--text-primary);
+                line-height: 1.2;
+            }
+            h1 span {
+                display: block;
+                font-size: 11px;
+                font-weight: 400;
+                color: var(--text-muted);
+                margin-top: 2px;
+            }
+            label {
+                font-size: 12px;
+                font-weight: 500;
+                color: var(--text-secondary);
+                display: block;
+                margin-bottom: 5px;
+            }
+            input {
+                width: 100%;
+                padding: 9px 12px;
+                border: 1px solid var(--border);
+                border-radius: 7px;
+                font-size: 14px;
+                font-family: 'DM Sans', sans-serif;
+                color: var(--text-primary);
+                background: var(--bg-surface);
+                margin-bottom: 14px;
+                outline: none;
+                transition: border-color 0.15s;
+            }
+            input:focus { border-color: var(--accent); }
+            button, .btn-oidc {
+                width: 100%;
+                padding: 10px;
+                border-radius: 7px;
+                font-size: 14px;
+                font-weight: 500;
+                font-family: 'DM Sans', sans-serif;
+                cursor: pointer;
+                transition: background 0.15s;
+                text-decoration: none;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+            }
+            button {
+                background: var(--accent);
+                color: #fff;
+                border: none;
+            }
+            button:hover { background: var(--accent-hover); }
+            .btn-oidc {
+                background: var(--bg-surface);
+                color: var(--text-primary);
+                border: 1px solid var(--border);
+                margin-top: 8px;
+            }
+            .btn-oidc:hover { background: var(--bg-elevated); }
+            .btn-oidc svg { width: 16px; height: 16px; flex-shrink: 0; }
+            .divisor {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin: 18px 0 10px;
+                color: var(--text-muted);
+                font-size: 11.5px;
+            }
+            .divisor::before, .divisor::after {
+                content: '';
+                flex: 1;
+                height: 1px;
+                background: var(--border);
+            }
+            .erro {
+                color: var(--danger);
+                font-size: 12.5px;
+                padding: 10px 14px;
+                background: var(--danger-bg);
+                border: 1px solid var(--danger-bdr);
+                border-radius: 7px;
+                margin-bottom: 14px;
+            }
+            .link-cadastro {
+                text-align: center;
+                margin-top: 20px;
+                font-size: 12.5px;
+                color: var(--text-muted);
+            }
+            .link-cadastro a {
+                color: var(--accent);
+                text-decoration: none;
+            }
+            .link-cadastro a:hover { text-decoration: underline; }
+            .voltar {
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                font-size: 12px;
+                color: var(--text-muted);
+                text-decoration: none;
+                margin-bottom: 20px;
+            }
+            .voltar:hover { color: var(--text-primary); }
+        </style>
+    </head>
+    <body>
+        <div class="card">
+            <a href="/" class="voltar">← Voltar ao site</a>
+
+            <div class="logo-wrap">
+                {% if site_logo %}
+                <img src="{{ site_logo }}" alt="{{ site_nome }}" style="width:32px; height:32px; border-radius:8px; object-fit:cover; flex-shrink:0;">
+                {% else %}
+                <div class="logo-mark">{{ site_nome | truncate(length=1, end="") }}</div>
+                {% endif %}
+                <h1>
+                    {{ site_nome }}
+                    <span>Área de Membros</span>
+                </h1>
+            </div>
+
+            {% if erro %}
+            <p class="erro">{{ erro }}</p>
+            {% endif %}
+
+            <form method="post" action="/membros/login">
+                <input type="hidden" name="next" value="{{ next }}">
+                <label>E-mail</label>
+                <input type="email" name="email" required autofocus />
+                <label>Senha</label>
+                <input type="password" name="senha" required />
+                <button type="submit">Entrar</button>
+            </form>
+
+            {% if google_habilitado or microsoft_habilitado or github_habilitado or oidc_generico_habilitado %}
+            <div class="divisor">ou continue com</div>
+
+            {% if google_habilitado %}
+            <a href="/auth/google/redirect?next={{ next | urlencode }}" class="btn-oidc">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                </svg>
+                Entrar com Google
+            </a>
+            {% endif %}
+
+            {% if microsoft_habilitado %}
+            <a href="/auth/microsoft/redirect?next={{ next | urlencode }}" class="btn-oidc">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M11.4 2H2v9.4h9.4V2z" fill="#F25022"/>
+                    <path d="M22 2h-9.4v9.4H22V2z" fill="#7FBA00"/>
+                    <path d="M11.4 12.6H2V22h9.4v-9.4z" fill="#00A4EF"/>
+                    <path d="M22 12.6h-9.4V22H22v-9.4z" fill="#FFB900"/>
+                </svg>
+                Entrar com Microsoft
+            </a>
+            {% endif %}
+
+            {% if github_habilitado %}
+            <a href="/auth/github/redirect?next={{ next | urlencode }}" class="btn-oidc">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+                    <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.31.678.921.678 1.856 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z"/>
+                </svg>
+                Entrar com GitHub
+            </a>
+            {% endif %}
+
+            {% if oidc_generico_habilitado %}
+            <a href="/auth/oidc/redirect?next={{ next | urlencode }}" class="btn-oidc">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 8v4l3 3"/>
+                </svg>
+                {{ oidc_botao_label }}
+            </a>
+            {% endif %}
+
+            {% endif %}
+
+            <div class="link-cadastro">
+                Não tem conta? <a href="/membros/cadastro?next={{ next | urlencode }}">Cadastre-se</a>
+            </div>
+        </div>
+    </body>
+</html>

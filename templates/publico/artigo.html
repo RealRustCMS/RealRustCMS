@@ -1,0 +1,237 @@
+{% extends "publico/base.html" %}
+
+{% block titulo %}{% if artigo.titulo_seo %}{{ artigo.titulo_seo }}{% else %}{{ artigo.titulo }}{% endif %} — {{ site_nome }}{% endblock %}
+
+{% block meta_seo %}
+<meta name="description" content="{% if artigo.resumo %}{{ artigo.resumo }}{% else %}{{ site_descricao }}{% endif %}">
+<link rel="canonical" href="{{ base_url }}/artigos/{{ artigo.slug }}">
+<meta property="og:type" content="article">
+<meta property="og:title" content="{% if artigo.titulo_seo %}{{ artigo.titulo_seo }}{% else %}{{ artigo.titulo }}{% endif %}">
+<meta property="og:description" content="{% if artigo.resumo %}{{ artigo.resumo }}{% else %}{{ site_descricao }}{% endif %}">
+<meta property="og:url" content="{{ base_url }}/artigos/{{ artigo.slug }}">
+{% if artigo.imagem_capa %}<meta property="og:image" content="{{ base_url }}{{ artigo.imagem_capa }}">{% endif %}
+<meta property="og:site_name" content="{{ site_nome }}">
+{% endblock %}
+
+{% block estilos %}
+<style>
+  .artigo-header { margin-bottom: 40px; }
+  .artigo-titulo { font-size: 28px; font-weight: 600; letter-spacing: -.6px; line-height: 1.25; margin-bottom: 12px; }
+  .artigo-meta { font-size: 12.5px; color: var(--text-muted); font-family: 'DM Mono', monospace; }
+  .artigo-corpo { font-size: 15.5px; line-height: 1.75; color: var(--text-secondary); max-width: 680px; }
+  .artigo-corpo p { margin-bottom: 1.2em; }
+  .voltar { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--accent); text-decoration: none; margin-bottom: 32px; }
+  .voltar:hover { color: var(--accent-hover); }
+  .avaliacao-bloco { max-width: 680px; margin-top: 40px; padding: 20px 24px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 10px; }
+  .avaliacao-atual { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .avaliacao-obrigado { font-size: 13px; color: var(--accent); font-weight: 500; margin-bottom: 16px; }
+  .estrelas-exibicao { display: flex; gap: 2px; }
+  .estrela { font-size: 20px; line-height: 1; }
+  .estrela.cheia  { color: var(--accent); }
+  .estrela.meia   { color: var(--accent); opacity: .55; }
+  .estrela.vazia  { color: var(--border); }
+  .avaliacao-info { font-size: 13px; color: var(--text-muted); font-family: 'DM Mono', monospace; }
+  .avaliacao-sem-votos { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; }
+  .avaliacao-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; }
+  .estrelas-input { display: flex; gap: 4px; margin-bottom: 12px; cursor: pointer; }
+  .estrela-btn { font-size: 28px; color: var(--border); transition: color .1s; user-select: none; }
+  .btn-avaliar { background: var(--accent); color: #fff; border: none; padding: 7px 16px; border-radius: 7px; font-size: 13px; font-weight: 500; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: background .15s; }
+  .btn-avaliar:disabled { opacity: .45; cursor: not-allowed; }
+  .btn-avaliar:not(:disabled):hover { background: var(--accent-hover); }
+  .comentarios { max-width: 680px; margin-top: 56px; }
+  .comentarios-titulo { font-size: 18px; font-weight: 600; margin-bottom: 24px; color: var(--text-primary); }
+  .comentario { padding: 16px 0; border-bottom: 1px solid var(--border); }
+  .comentario:last-child { border-bottom: none; }
+  .comentario-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .comentario-autor { font-size: 13.5px; font-weight: 600; color: var(--text-primary); }
+  .comentario-data { font-size: 11.5px; color: var(--text-muted); font-family: 'DM Mono', monospace; }
+  .comentario-corpo { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+  .form-comentario { margin-top: 32px; padding: 24px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 10px; }
+  .form-comentario h3 { font-size: 15px; font-weight: 600; margin-bottom: 18px; color: var(--text-primary); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .form-campo { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+  .form-campo label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+  .form-campo input, .form-campo textarea { padding: 9px 12px; border: 1px solid var(--border); border-radius: 7px; font-size: 13.5px; font-family: 'DM Sans', sans-serif; color: var(--text-primary); outline: none; transition: border-color .15s; }
+  .form-campo input:focus, .form-campo textarea:focus { border-color: var(--accent); }
+  .form-campo textarea { min-height: 100px; resize: vertical; }
+  .btn-enviar { background: var(--accent); color: #fff; border: none; padding: 9px 18px; border-radius: 7px; font-size: 13.5px; font-weight: 500; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: background .15s; }
+  .btn-enviar:hover { background: var(--accent-hover); }
+  .aviso-pendente { padding: 12px 16px; background: #fff8e1; border: 1px solid #ffe082; border-radius: 7px; font-size: 13px; color: #e65100; margin-top: 16px; }
+</style>
+{% endblock %}
+
+{% block conteudo %}
+<a href="/artigos" class="voltar">← Todos os artigos</a>
+
+<div class="artigo-header">
+  <h1 class="artigo-titulo">{{ artigo.titulo }}</h1>
+  <p class="artigo-meta">
+      Por {{ autor_nome }}
+      · {{ artigo.publicado_em | date(format="%d/%m/%Y") }}
+      {% if categoria %}
+      · <a href="/categoria/{{ categoria.slug }}" style="color:var(--accent); text-decoration:none;">{{ categoria.nome }}</a>
+      {% endif %}
+      · {{ views }} visualiza{% if views == 1 %}ção{% else %}ções{% endif %}
+      · {{ tempo_leitura }} min de leitura
+  </p>
+  {% if tags | length > 0 %}
+  <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:12px;">
+    {% for tag in tags %}
+    <a href="/tag/{{ tag.slug }}" style="display:inline-block; padding:3px 10px; background:var(--accent-muted); color:var(--accent); border-radius:20px; font-size:12px; text-decoration:none;">{{ tag.nome }}</a>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+
+{% if artigo.imagem_capa %}
+<div style="max-width:680px; margin-bottom:32px;">
+  <img src="{{ artigo.imagem_capa }}" alt="{{ artigo.titulo }}" style="width:100%; border-radius:10px; border:1px solid var(--border);">
+</div>
+{% endif %}
+
+<div class="artigo-corpo">
+  {{ artigo.corpo | safe }}
+</div>
+
+{% if relacionados | length > 0 %}
+<div style="max-width:680px; margin-top:48px; padding-top:32px; border-top:1px solid var(--border);">
+  <h2 style="font-size:16px; font-weight:600; color:var(--text-primary); margin-bottom:16px;">Artigos relacionados</h2>
+  <div style="display:flex; flex-direction:column; gap:1px; background:var(--border); border:1px solid var(--border); border-radius:10px; overflow:hidden;">
+    {% for rel in relacionados %}
+    <a href="/artigos/{{ rel.slug }}" style="display:flex; align-items:flex-start; gap:14px; padding:16px 18px; background:var(--bg-surface); text-decoration:none; transition:background .15s;">
+      {% if rel.imagem_capa %}
+      <img src="{{ rel.imagem_capa }}" alt="{{ rel.titulo }}" style="width:64px; height:48px; object-fit:cover; border-radius:5px; flex-shrink:0; border:1px solid var(--border);">
+      {% endif %}
+      <div style="min-width:0;">
+        <div style="font-size:14px; font-weight:500; color:var(--text-primary); margin-bottom:4px;">{{ rel.titulo }}</div>
+        {% if rel.resumo %}<div style="font-size:12.5px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ rel.resumo }}</div>{% endif %}
+        <div style="font-size:11.5px; color:var(--text-muted); font-family:'DM Mono',monospace; margin-top:4px;">{{ rel.publicado_em | date(format="%d/%m/%Y") }}</div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% if artigo.avaliacoes_habilitadas %}
+<div id="avaliacao" class="avaliacao-bloco">
+  {% if avaliado %}
+  <p class="avaliacao-obrigado">✓ Obrigado pela sua avaliação!</p>
+  {% endif %}
+  {% if avaliacao %}
+  <div class="avaliacao-atual">
+    <div class="estrelas-exibicao">
+      {% for estado in avaliacao.estrelas %}
+        {% if estado == 2 %}<span class="estrela cheia">★</span>
+        {% elif estado == 1 %}<span class="estrela meia">★</span>
+        {% else %}<span class="estrela vazia">☆</span>
+        {% endif %}
+      {% endfor %}
+    </div>
+    <span class="avaliacao-info">{{ avaliacao.media_formatada }} · {{ avaliacao.total }} voto{% if avaliacao.total != 1 %}s{% endif %}</span>
+  </div>
+  {% else %}
+  <p class="avaliacao-sem-votos">Seja o primeiro a avaliar este artigo.</p>
+  {% endif %}
+
+  <p class="avaliacao-label">Sua avaliação:</p>
+  <form method="post" action="/artigos/{{ artigo.slug }}/avaliar">
+    <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+    <input type="hidden" name="nota" id="nota-input" value="0">
+    <div class="estrelas-input" id="estrelas-input">
+      <span class="estrela-btn" data-valor="1">☆</span>
+      <span class="estrela-btn" data-valor="2">☆</span>
+      <span class="estrela-btn" data-valor="3">☆</span>
+      <span class="estrela-btn" data-valor="4">☆</span>
+      <span class="estrela-btn" data-valor="5">☆</span>
+    </div>
+    <button type="submit" id="btn-avaliar" class="btn-avaliar" disabled>Avaliar</button>
+  </form>
+</div>
+{% endif %}
+
+{% if artigo.comentarios_habilitados %}
+<div class="comentarios" id="comentarios">
+  <h2 class="comentarios-titulo">
+    {% if comentarios | length == 0 %}Nenhum comentário ainda
+    {% elif comentarios | length == 1 %}1 comentário
+    {% else %}{{ comentarios | length }} comentários
+    {% endif %}
+  </h2>
+
+  {% for comentario in comentarios %}
+  <div class="comentario">
+    <div class="comentario-header">
+      <span class="comentario-autor">{{ comentario.autor_nome }}</span>
+      <span class="comentario-data">{{ comentario.criado_em | date(format="%d/%m/%Y às %H:%M") }}</span>
+    </div>
+    <p class="comentario-corpo">{{ comentario.corpo }}</p>
+  </div>
+  {% endfor %}
+
+  <div id="comentario-pendente" class="aviso-pendente" style="display:none">
+    Seu comentário foi enviado e aguarda moderação.
+  </div>
+
+  <div class="form-comentario">
+    <h3>Deixe um comentário</h3>
+    <form method="post" action="/artigos/{{ artigo.slug }}/comentarios">
+      <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+      <div class="form-row">
+        <div class="form-campo">
+          <label>Nome</label>
+          <input type="text" name="autor_nome" required placeholder="Seu nome">
+        </div>
+        <div class="form-campo">
+          <label>E-mail</label>
+          <input type="email" name="autor_email" required placeholder="seu@email.com">
+        </div>
+      </div>
+      <div class="form-campo">
+        <label>Comentário</label>
+        <textarea name="corpo" required placeholder="Escreva seu comentário..."></textarea>
+      </div>
+      {% if turnstile_site_key %}
+      <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}" style="margin-bottom:12px;"></div>
+      <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+      {% endif %}
+      <button type="submit" class="btn-enviar">Enviar comentário</button>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<script>
+  (function() {
+    var btns = document.querySelectorAll('.estrela-btn');
+    var input = document.getElementById('nota-input');
+    var btnAvaliar = document.getElementById('btn-avaliar');
+    var selecionado = 0;
+
+    function pintar(ate) {
+      for (var i = 0; i < btns.length; i++) {
+        btns[i].textContent = (i < ate) ? '★' : '☆';
+        btns[i].style.color = (i < ate) ? 'var(--accent)' : 'var(--border)';
+      }
+    }
+
+    for (var i = 0; i < btns.length; i++) {
+      (function(btn, valor) {
+        btn.addEventListener('mouseover', function() { pintar(valor); });
+        btn.addEventListener('mouseout',  function() { pintar(selecionado); });
+        btn.addEventListener('click', function() {
+          selecionado = valor;
+          input.value = valor;
+          btnAvaliar.disabled = false;
+          pintar(selecionado);
+        });
+      })(btns[i], i + 1);
+    }
+  })();
+
+  if (window.location.hash === '#comentario-pendente') {
+    var aviso = document.getElementById('comentario-pendente');
+    if (aviso) { aviso.style.display = 'block'; }
+  }
+</script>
+{% endblock %}

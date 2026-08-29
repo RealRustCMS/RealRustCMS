@@ -1,0 +1,33 @@
+/* ─── TEMA: ESCURO ───────────────────────────────────────── */
+:root {
+  --bg-page:         #212529;
+  --bg-surface:      #2b3035;
+  --bg-elevated:     #343A40;
+  --sidebar-bg:      #131619;
+  --sidebar-border:  rgba(255,255,255,0.07);
+  --accent:          #6C757D;
+  --accent-hover:    #868e96;
+  --accent-muted:    #343A40;
+  --accent-shadow:   rgba(108,117,125,0.35);
+  --accent-text:     #ffffff;
+  --text-primary:    #f8f9fa;
+  --text-secondary:  #ced4da;
+  --text-muted:      #6C757D;
+  --border:          #3d4449;
+  --border-subtle:   #343A40;
+  --border-strong:   #495057;
+  --nav-hover:       rgba(255,255,255,0.06);
+  --nav-active-bg:   rgba(255,255,255,0.10);
+  --nav-active-text: #f8f9fa;
+  --user-av-bg:      rgba(255,255,255,0.12);
+  --row-hover:       #2f3439;
+  --btn-secondary-hover: #3d4449;
+  --badge-pub-bg:    #1a3a1e;
+  --badge-pub-text:  #6fcf7a;
+  --badge-pub-bdr:   #2a5c30;
+  --badge-draft-bg:  #3a2800;
+  --badge-draft-txt: #f0a040;
+  --danger:          #e05c50;
+  --danger-bg:       #3a1a18;
+  --danger-bdr:      #6b2e28;
+}

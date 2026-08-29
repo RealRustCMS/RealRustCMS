@@ -1,0 +1,1 @@
+ALTER TABLE artigos ADD COLUMN avaliacoes_habilitadas BOOLEAN NOT NULL DEFAULT TRUE;

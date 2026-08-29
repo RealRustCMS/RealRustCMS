@@ -1,0 +1,44 @@
+{% extends "publico/base.html" %}
+
+{% block titulo %}Galeria — {{ site_nome }}{% endblock %}
+
+{% block estilos %}
+<style>
+  .page-titulo { font-size: 24px; font-weight: 600; letter-spacing: -.5px; margin-bottom: 32px; }
+  .albuns-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+  .album-card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; text-decoration: none; display: block; transition: box-shadow .2s, transform .2s; }
+  .album-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px var(--accent-shadow); }
+  .album-thumb { height: 180px; background: var(--bg-elevated); overflow: hidden; display: flex; align-items: center; justify-content: center; color: var(--text-muted); }
+  .album-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .album-info { padding: 14px 16px; }
+  .album-titulo { font-size: 14px; font-weight: 500; color: var(--text-primary); margin-bottom: 3px; }
+  .album-meta { font-size: 12px; color: var(--text-muted); }
+  .vazio { text-align: center; padding: 64px 0; color: var(--text-muted); font-size: 14px; }
+</style>
+{% endblock %}
+
+{% block conteudo %}
+<h1 class="page-titulo">Galeria</h1>
+
+{% if albuns | length > 0 %}
+<div class="albuns-grid">
+  {% for album in albuns %}
+  <a href="/galeria/{{ album.id }}" class="album-card">
+    <div class="album-thumb">
+      {% if album.capa_url %}
+        <img src="{{ album.capa_url }}" alt="{{ album.titulo }}">
+      {% else %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="36" height="36"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>
+      {% endif %}
+    </div>
+    <div class="album-info">
+      <div class="album-titulo">{{ album.titulo }}</div>
+      <div class="album-meta">{{ album.criado_em | date(format="%d/%m/%Y") }}</div>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="vazio">Nenhum álbum publicado ainda.</div>
+{% endif %}
+{% endblock %}

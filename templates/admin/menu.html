@@ -1,0 +1,431 @@
+{% extends "base.html" %}
+
+{% block titulo %}Editor de Menu{% endblock %}
+
+{% block estilos %}
+<style>
+  .menu-editor { display: grid; grid-template-columns: 280px 1fr; gap: 20px; align-items: start; }
+
+  /* ── PAINEL ESQUERDO ── */
+  .add-panel { display: flex; flex-direction: column; gap: 12px; }
+  .add-section { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .add-section-title { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; padding: 10px 14px; border-bottom: 1px solid var(--border); background: var(--bg-elevated); }
+  .add-section-body { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+  .add-form-group { display: flex; flex-direction: column; gap: 4px; }
+  .add-label { font-size: 11.5px; color: var(--text-muted); }
+  .add-select, .add-input { padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; font-family: 'DM Sans', sans-serif; color: var(--text-primary); background: var(--bg-surface); outline: none; transition: border-color .15s; width: 100%; }
+  .add-select:focus, .add-input:focus { border-color: var(--accent); }
+  .add-check-row { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--text-secondary); }
+  .btn-add { background: var(--accent); color: #fff; border: none; padding: 8px 14px; border-radius: 7px; font-size: 13px; font-weight: 500; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: background .15s; width: 100%; }
+  .btn-add:hover { background: var(--accent-hover); }
+
+  /* ── PAINEL DIREITO: árvore ── */
+  .tree-panel { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .tree-panel-header { padding: 13px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .tree-panel-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+  .tree-panel-hint { font-size: 11.5px; color: var(--text-muted); }
+  .tree-body { padding: 12px; min-height: 200px; }
+  .tree-empty { padding: 32px; text-align: center; color: var(--text-muted); font-size: 13px; }
+
+  /* ── ITENS ── */
+  .sortable-list { list-style: none; display: flex; flex-direction: column; gap: 4px; min-height: 8px; }
+  .sortable-item { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 7px; }
+  .sortable-item.sortable-ghost { opacity: .35; }
+  .sortable-item.sortable-chosen { box-shadow: 0 4px 16px rgba(65,93,67,.15); }
+
+  .item-row { display: flex; align-items: center; gap: 8px; padding: 9px 12px; }
+  .item-handle { cursor: grab; color: var(--text-muted); font-size: 15px; flex-shrink: 0; line-height: 1; }
+  .item-handle:active { cursor: grabbing; }
+  .item-rotulo { flex: 1; font-size: 13px; color: var(--text-primary); }
+  .item-tipo { font-size: 10.5px; color: var(--text-muted); background: var(--bg-surface); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; flex-shrink: 0; }
+  .item-restrito { font-size: 10.5px; color: var(--accent); background: var(--accent-muted); border: 1px solid var(--accent); border-radius: 4px; padding: 1px 6px; flex-shrink: 0; }
+  .btn-del-item { background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 3px; border-radius: 4px; transition: color .1s, background .1s; flex-shrink: 0; }
+  .btn-del-item:hover { color: var(--danger); background: var(--danger-bg); }
+  .btn-del-item svg { width: 13px; height: 13px; display: block; }
+
+  /* ── FILHOS ANINHADOS ──
+     A drop zone é sempre visível — mesmo vazia tem altura mínima para receber drops.
+     A linha vertical à esquerda indica o nível de aninhamento.
+  */
+  .item-children {
+    margin: 0 8px 8px 36px;
+    padding: 4px 4px 4px 10px;
+    border-left: 2px solid var(--border);
+    border-radius: 0 0 0 4px;
+  }
+  /* Drop zone vazia — mostra hint visual para o usuário */
+  .item-children:empty::after,
+  .item-children .sortable-list:empty::after {
+    content: 'Solte aqui para criar submenu';
+    display: block;
+    padding: 6px 10px;
+    font-size: 11.5px;
+    color: var(--text-muted);
+    font-style: italic;
+  }
+  /* Quando está sendo arrastado sobre a zona */
+  .item-children.sortable-drag-over { background: var(--accent-muted); border-color: var(--accent); border-radius: 4px; }
+
+  /* ── BARRA DE SALVAR ── */
+  .save-bar { border-top: 1px solid var(--border); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; background: var(--bg-elevated); }
+  .save-status { font-size: 12.5px; color: var(--text-muted); }
+  .save-status.ok { color: #2a7d32; }
+  .save-status.erro { color: var(--danger); }
+  .btn-salvar { background: var(--accent); color: #fff; border: none; padding: 8px 18px; border-radius: 7px; font-size: 13px; font-weight: 500; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: background .15s; }
+  .btn-salvar:hover { background: var(--accent-hover); }
+  .btn-salvar:disabled { opacity: .5; cursor: not-allowed; }
+</style>
+{% endblock %}
+
+{% block topbar_acoes %}
+<a href="/admin" class="btn btn-secondary">← Voltar</a>
+{% endblock %}
+
+{% block conteudo %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Editor de Menu</h1>
+    <p class="page-sub">Arraste para reordenar · solte sobre um item para criar submenu</p>
+  </div>
+</div>
+
+<div class="menu-editor">
+
+  <!-- ── PAINEL ESQUERDO ── -->
+  <div class="add-panel">
+
+    <div class="add-section">
+      <div class="add-section-title">Páginas</div>
+      <div class="add-section-body">
+        <form method="post" action="/admin/menu/{{ menu.id }}/itens">
+          <input type="hidden" name="tipo" value="pagina">
+          <div class="add-form-group">
+            <label class="add-label">Selecionar página</label>
+            <select name="referencia_id" class="add-select" required>
+              <option value="">— escolher —</option>
+              {% for p in paginas %}
+              <option value="{{ p.id }}">{{ p.titulo }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="add-form-group" style="margin-top:8px;">
+            <label class="add-label">Rótulo (opcional)</label>
+            <input type="text" name="rotulo" class="add-input" placeholder="Deixe vazio para usar o título">
+          </div>
+          <label class="add-check-row" style="margin-top:8px;"><input type="checkbox" name="abrir_nova_aba"> Abrir em nova aba</label>
+          <label class="add-check-row" style="margin-top:4px;"><input type="checkbox" name="restrito"> 🔒 Restrito a membros</label>
+          <button type="submit" class="btn-add" style="margin-top:10px;">+ Adicionar Página</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="add-section">
+      <div class="add-section-title">Artigos</div>
+      <div class="add-section-body">
+        <form method="post" action="/admin/menu/{{ menu.id }}/itens">
+          <input type="hidden" name="tipo" value="artigo">
+          <div class="add-form-group">
+            <label class="add-label">Rótulo</label>
+            <input type="text" name="rotulo" class="add-input" required placeholder="Ex: Blog">
+          </div>
+          <label class="add-check-row" style="margin-top:8px;"><input type="checkbox" name="abrir_nova_aba"> Abrir em nova aba</label>
+          <label class="add-check-row" style="margin-top:4px;"><input type="checkbox" name="restrito"> 🔒 Restrito a membros</label>
+          <button type="submit" class="btn-add" style="margin-top:10px;">+ Adicionar Artigos</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="add-section">
+      <div class="add-section-title">Galeria</div>
+      <div class="add-section-body">
+        <form method="post" action="/admin/menu/{{ menu.id }}/itens">
+          <input type="hidden" name="tipo" value="galeria">
+          <div class="add-form-group">
+            <label class="add-label">Rótulo</label>
+            <input type="text" name="rotulo" class="add-input" required placeholder="Ex: Galeria">
+          </div>
+          <label class="add-check-row" style="margin-top:8px;"><input type="checkbox" name="abrir_nova_aba"> Abrir em nova aba</label>
+          <label class="add-check-row" style="margin-top:4px;"><input type="checkbox" name="restrito"> 🔒 Restrito a membros</label>
+          <button type="submit" class="btn-add" style="margin-top:10px;">+ Adicionar Galeria</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="add-section">
+      <div class="add-section-title">Eventos</div>
+      <div class="add-section-body">
+        <form method="post" action="/admin/menu/{{ menu.id }}/itens">
+          <input type="hidden" name="tipo" value="eventos">
+          <div class="add-form-group">
+            <label class="add-label">Rótulo</label>
+            <input type="text" name="rotulo" class="add-input" required placeholder="Ex: Eventos">
+          </div>
+          <label class="add-check-row" style="margin-top:8px;"><input type="checkbox" name="abrir_nova_aba"> Abrir em nova aba</label>
+          <label class="add-check-row" style="margin-top:4px;"><input type="checkbox" name="restrito"> 🔒 Restrito a membros</label>
+          <button type="submit" class="btn-add" style="margin-top:10px;">+ Adicionar Eventos</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="add-section">
+      <div class="add-section-title">Categorias</div>
+      <div class="add-section-body">
+        <form method="post" action="/admin/menu/{{ menu.id }}/itens">
+          <input type="hidden" name="tipo" value="categoria">
+          <div class="add-form-group">
+            <label class="add-label">Selecionar categoria</label>
+            <select name="referencia_id" class="add-select" required>
+              <option value="">— escolher —</option>
+              {% for c in categorias %}
+              <option value="{{ c.id }}">{{ c.nome }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="add-form-group" style="margin-top:8px;">
+            <label class="add-label">Rótulo (opcional)</label>
+            <input type="text" name="rotulo" class="add-input" placeholder="Deixe vazio para usar o nome">
+          </div>
+          <label class="add-check-row" style="margin-top:8px;"><input type="checkbox" name="abrir_nova_aba"> Abrir em nova aba</label>
+          <label class="add-check-row" style="margin-top:4px;"><input type="checkbox" name="restrito"> 🔒 Restrito a membros</label>
+          <button type="submit" class="btn-add" style="margin-top:10px;">+ Adicionar Categoria</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="add-section">
+      <div class="add-section-title">Tags</div>
+      <div class="add-section-body">
+        <form method="post" action="/admin/menu/{{ menu.id }}/itens">
+          <input type="hidden" name="tipo" value="tag">
+          <div class="add-form-group">
+            <label class="add-label">Selecionar tag</label>
+            <select name="referencia_id" class="add-select" required>
+              <option value="">— escolher —</option>
+              {% for t in tags %}
+              <option value="{{ t.id }}">{{ t.nome }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="add-form-group" style="margin-top:8px;">
+            <label class="add-label">Rótulo (opcional)</label>
+            <input type="text" name="rotulo" class="add-input" placeholder="Deixe vazio para usar o nome">
+          </div>
+          <label class="add-check-row" style="margin-top:8px;"><input type="checkbox" name="abrir_nova_aba"> Abrir em nova aba</label>
+          <label class="add-check-row" style="margin-top:4px;"><input type="checkbox" name="restrito"> 🔒 Restrito a membros</label>
+          <button type="submit" class="btn-add" style="margin-top:10px;">+ Adicionar Tag</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="add-section">
+      <div class="add-section-title">Link Externo</div>
+      <div class="add-section-body">
+        <form method="post" action="/admin/menu/{{ menu.id }}/itens">
+          <input type="hidden" name="tipo" value="externo">
+          <div class="add-form-group">
+            <label class="add-label">Rótulo</label>
+            <input type="text" name="rotulo" class="add-input" required placeholder="Ex: GitHub">
+          </div>
+          <div class="add-form-group" style="margin-top:8px;">
+            <label class="add-label">URL</label>
+            <input type="url" name="url_externa" class="add-input" required placeholder="https://...">
+          </div>
+          <label class="add-check-row" style="margin-top:8px;"><input type="checkbox" name="abrir_nova_aba"> Abrir em nova aba</label>
+          <label class="add-check-row" style="margin-top:4px;"><input type="checkbox" name="restrito"> 🔒 Restrito a membros</label>
+          <button type="submit" class="btn-add" style="margin-top:10px;">+ Adicionar Link</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Título/agrupador sem URL -->
+    <div class="add-section">
+      <div class="add-section-title">Título / Agrupador</div>
+      <div class="add-section-body">
+        <form method="post" action="/admin/menu/{{ menu.id }}/itens">
+          <input type="hidden" name="tipo" value="externo">
+          <input type="hidden" name="url_externa" value="#">
+          <div class="add-form-group">
+            <label class="add-label">Rótulo</label>
+            <input type="text" name="rotulo" class="add-input" required placeholder="Ex: Sobre, Serviços...">
+          </div>
+          <p style="font-size:11.5px; color:var(--text-muted); margin-top:6px;">Item não clicável — use como cabeçalho de submenu.</p>
+          <label class="add-check-row" style="margin-top:8px;"><input type="checkbox" name="restrito"> 🔒 Restrito a membros</label>
+          <button type="submit" class="btn-add" style="margin-top:10px;">+ Adicionar Título</button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── PAINEL DIREITO: árvore ── -->
+  <div class="tree-panel">
+    <div class="tree-panel-header">
+      <span class="tree-panel-title">Estrutura do menu</span>
+      <span class="tree-panel-hint">arraste · solte sobre item para aninhar</span>
+    </div>
+    <div class="tree-body">
+      {% if itens | length == 0 %}
+      <div class="tree-empty">Nenhum item ainda. Adicione itens pelo painel à esquerda.</div>
+      {% else %}
+      <ul class="sortable-list" id="sortable-root">
+        {% for item in itens %}
+        {% if not item.pai_id %}
+        <li class="sortable-item" data-id="{{ item.id }}">
+          <div class="item-row">
+            <span class="item-handle">⠿</span>
+            <span class="item-rotulo">{{ item.rotulo }}</span>
+            <span class="item-tipo">{{ item.tipo }}</span>
+            {% if item.restrito %}<span class="item-restrito" title="Restrito a membros">🔒</span>{% endif %}
+            <form method="post" action="/admin/menu/itens/{{ item.id }}/deletar" style="display:inline" onsubmit="return confirm('Deletar «{{ item.rotulo }}» e todos os seus submenus?')">
+              <button type="submit" class="btn-del-item" title="Deletar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3,6 5,6 21,6"/><path d="M19,6l-1,14a2,2,0,0,1-2,2H8a2,2,0,0,1-2-2L5,6"/></svg>
+              </button>
+            </form>
+          </div>
+          {# Drop zone de filhos — sempre presente, mesmo vazia #}
+          <div class="item-children">
+            <ul class="sortable-list" data-pai="{{ item.id }}">
+              {% for filho in itens %}
+              {% if filho.pai_id == item.id %}
+              <li class="sortable-item" data-id="{{ filho.id }}">
+                <div class="item-row">
+                  <span class="item-handle">⠿</span>
+                  <span class="item-rotulo">{{ filho.rotulo }}</span>
+                  <span class="item-tipo">{{ filho.tipo }}</span>
+                  {% if filho.restrito %}<span class="item-restrito" title="Restrito a membros">🔒</span>{% endif %}
+                  <form method="post" action="/admin/menu/itens/{{ filho.id }}/deletar" style="display:inline" onsubmit="return confirm('Deletar «{{ filho.rotulo }}»?')">
+                    <button type="submit" class="btn-del-item" title="Deletar">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3,6 5,6 21,6"/><path d="M19,6l-1,14a2,2,0,0,1-2,2H8a2,2,0,0,1-2-2L5,6"/></svg>
+                    </button>
+                  </form>
+                </div>
+                {# Drop zone de netos — sempre presente #}
+                <div class="item-children">
+                  <ul class="sortable-list" data-pai="{{ filho.id }}">
+                    {% for neto in itens %}
+                    {% if neto.pai_id == filho.id %}
+                    <li class="sortable-item" data-id="{{ neto.id }}">
+                      <div class="item-row">
+                        <span class="item-handle">⠿</span>
+                        <span class="item-rotulo">{{ neto.rotulo }}</span>
+                        <span class="item-tipo">{{ neto.tipo }}</span>
+                        {% if neto.restrito %}<span class="item-restrito" title="Restrito a membros">🔒</span>{% endif %}
+                        <form method="post" action="/admin/menu/itens/{{ neto.id }}/deletar" style="display:inline" onsubmit="return confirm('Deletar «{{ neto.rotulo }}»?')">
+                          <button type="submit" class="btn-del-item" title="Deletar">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3,6 5,6 21,6"/><path d="M19,6l-1,14a2,2,0,0,1-2,2H8a2,2,0,0,1-2-2L5,6"/></svg>
+                          </button>
+                        </form>
+                      </div>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                  </ul>
+                </div>
+              </li>
+              {% endif %}
+              {% endfor %}
+            </ul>
+          </div>
+        </li>
+        {% endif %}
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+    <div class="save-bar">
+      <span class="save-status" id="save-status">Salvo</span>
+      <button class="btn-salvar" id="btn-salvar" onclick="salvarMenu()">Salvar menu</button>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+<script>
+var MENU_ID = "{{ menu.id }}";
+var salvando = false;
+
+function inicializarSortables() {
+  // Inicializa em TODAS as listas — incluindo as vazias.
+  // group: 'menu' com mesmo nome permite mover itens entre qualquer lista.
+  // A lista de nível pai tem fallbackOnBody: false para não vazar para fora.
+  document.querySelectorAll('.sortable-list').forEach(function(lista) {
+    Sortable.create(lista, {
+      group: 'menu',
+      handle: '.item-handle',
+      animation: 150,
+      ghostClass: 'sortable-ghost',
+      chosenClass: 'sortable-chosen',
+      // Quando soltar num item filho, o SortableJS move o elemento DOM.
+      // onEnd captura qualquer mudança e marca como alterado.
+      onEnd: function() {
+        marcarAlterado();
+      }
+    });
+  });
+}
+
+function marcarAlterado() {
+  var status = document.getElementById('save-status');
+  status.textContent = 'Alterações não salvas';
+  status.className = 'save-status';
+}
+
+// Serializa a árvore DOM recursivamente.
+// Cada <li.sortable-item> tem data-id.
+// Filhos estão dentro de .item-children > .sortable-list dentro do mesmo <li>.
+function serializarLista(lista) {
+  var nos = [];
+  var itens = lista.children;
+  for (var i = 0; i < itens.length; i++) {
+    var item = itens[i];
+    if (!item.classList.contains('sortable-item')) { continue; }
+    var id = item.getAttribute('data-id');
+    // Busca lista de filhos DIRETA deste item (não desce mais de um nível por vez)
+    var filhosUl = item.querySelector('.item-children > .sortable-list');
+    var filhos = filhosUl ? serializarLista(filhosUl) : [];
+    nos.push({ id: id, filhos: filhos });
+  }
+  return nos;
+}
+
+function salvarMenu() {
+  if (salvando) { return; }
+  salvando = true;
+
+  var btn = document.getElementById('btn-salvar');
+  var status = document.getElementById('save-status');
+  btn.disabled = true;
+  status.textContent = 'Salvando...';
+  status.className = 'save-status';
+
+  var root = document.getElementById('sortable-root');
+  var payload = { itens: root ? serializarLista(root) : [] };
+
+  fetch('/admin/menu/' + MENU_ID + '/salvar', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+  .then(function(resp) {
+    if (resp.ok) {
+      status.textContent = 'Salvo com sucesso!';
+      status.className = 'save-status ok';
+    } else {
+      status.textContent = 'Erro ao salvar. Tente novamente.';
+      status.className = 'save-status erro';
+    }
+  })
+  .catch(function() {
+    status.textContent = 'Erro de conexão.';
+    status.className = 'save-status erro';
+  })
+  .finally(function() {
+    salvando = false;
+    btn.disabled = false;
+  });
+}
+
+document.addEventListener('DOMContentLoaded', inicializarSortables);
+</script>
+{% endblock %}

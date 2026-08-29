@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block titulo %}Editar Membro{% endblock %}
+
+{% block estilos %}
+<style>
+  .form-card { background:var(--bg-surface); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+  .form-body { padding:22px; display:flex; flex-direction:column; gap:18px; }
+  .form-group { display:flex; flex-direction:column; gap:6px; }
+  .form-group label { font-size:12px; font-weight:600; color:var(--text-secondary); }
+  .form-group input { padding:9px 12px; border:1px solid var(--border); border-radius:7px; font-size:13.5px; font-family:'DM Sans',sans-serif; color:var(--text-primary); outline:none; transition:border-color .15s; }
+  .form-group input:focus { border-color:var(--accent); }
+  .form-footer { padding:14px 22px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:flex-end; gap:8px; background:var(--bg-elevated); }
+  .secao { font-size:13px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px; padding-bottom:10px; border-bottom:1px solid var(--border); }
+  .erro { color:var(--danger); font-size:12.5px; padding:10px 14px; background:var(--danger-bg); border:1px solid var(--danger-bdr); border-radius:7px; margin-bottom:16px; }
+  .sucesso { color:var(--success,#16a34a); font-size:12.5px; padding:10px 14px; background:var(--success-bg,#f0fdf4); border:1px solid var(--success-bdr,#bbf7d0); border-radius:7px; margin-bottom:16px; }
+  .check-row { display:flex; align-items:center; gap:8px; font-size:13.5px; color:var(--text-primary); }
+  .check-row input[type=checkbox] { width:16px; height:16px; accent-color:var(--accent); cursor:pointer; }
+  .badge-oauth { display:inline-block; font-size:11px; padding:2px 8px; border-radius:20px; background:#e8f0fe; color:#1a56cc; border:1px solid #c0d0f8; margin-left:6px; }
+</style>
+{% endblock %}
+
+{% block topbar_acoes %}
+<a href="/admin/membros" class="btn btn-secondary">← Voltar</a>
+{% endblock %}
+
+{% block conteudo %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Editar Membro</h1>
+    <p class="page-sub">
+      {{ membro.nome }}
+      {% if membro.oauth_provider %}
+      <span class="badge-oauth">{{ membro.oauth_provider }}</span>
+      {% endif %}
+    </p>
+  </div>
+</div>
+
+{% if erro %}
+<div class="erro">{{ erro }}</div>
+{% endif %}
+
+{% if sucesso %}
+<div class="sucesso">Membro atualizado com sucesso.</div>
+{% endif %}
+
+<div class="form-card">
+  <form method="post" action="/admin/membros/{{ membro.id }}/editar">
+    <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+    <div class="form-body">
+      <div class="secao">Dados do membro</div>
+      <div class="form-group">
+        <label>Nome</label>
+        <input type="text" name="nome" value="{{ membro.nome }}" required autofocus>
+      </div>
+      <div class="form-group">
+        <label>E-mail</label>
+        <input type="email" name="email" value="{{ membro.email }}" required>
+      </div>
+      <div class="form-group">
+        <label class="check-row">
+          <input type="checkbox" name="ativo" {% if membro.ativo %}checked{% endif %}>
+          Membro ativo
+        </label>
+      </div>
+    </div>
+    <div class="form-footer">
+      <a href="/admin/membros" class="btn btn-secondary">Cancelar</a>
+      <button type="submit" class="btn btn-primary">Salvar alterações</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

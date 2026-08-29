@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block titulo %}{{ form_titulo }}{% endblock %}
+
+{% block estilos %}
+<style>
+  .form-grid { display: grid; grid-template-columns: 1fr 280px; gap: 20px; align-items: start; }
+  .form-main { display: flex; flex-direction: column; gap: 16px; }
+  .form-side { display: flex; flex-direction: column; gap: 16px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+  .form-input, .form-textarea { padding: 8px 11px; border: 1px solid var(--border); border-radius: 7px; font-size: 13.5px; font-family: 'DM Sans', sans-serif; color: var(--text-primary); background: var(--bg-surface); outline: none; transition: border-color .15s; }
+  .form-input:focus, .form-textarea:focus { border-color: var(--accent); }
+  .form-textarea { resize: vertical; min-height: 120px; line-height: 1.6; }
+  .side-card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+  .side-card-title { font-size: 11.5px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 12px; }
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; }
+  .toggle-label { font-size: 13px; color: var(--text-secondary); }
+  .toggle-input { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
+  .erro-box { background: var(--danger-bg); border: 1px solid var(--danger-bdr); border-radius: 8px; padding: 12px 16px; font-size: 13px; color: var(--danger); }
+</style>
+{% endblock %}
+
+{% block topbar_acoes %}
+<div style="display:flex; gap:8px;">
+  <a href="/admin/eventos" class="btn btn-secondary">← Voltar</a>
+  <button type="button" onclick="document.getElementById('form-evento').requestSubmit()" class="btn btn-primary">{{ form_botao }}</button>
+</div>
+{% endblock %}
+
+{% block conteudo %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{{ form_titulo }}</h1>
+  </div>
+</div>
+
+{% if erro %}
+<div class="erro-box" style="margin-bottom:16px;">{{ erro }}</div>
+{% endif %}
+
+<form id="form-evento" method="post" action="{{ form_action }}">
+  <div class="form-grid">
+    <div class="form-main">
+
+      <div class="form-group">
+        <label class="form-label">Título</label>
+        <input type="text" name="titulo" class="form-input" value="{{ titulo }}" required placeholder="Ex: Assembleia Geral Ordinária 2026/2028">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Descrição <span style="font-weight:400; color:var(--text-muted); text-transform:none;">(opcional)</span></label>
+        <textarea name="descricao" class="form-textarea" placeholder="Detalhes do evento...">{{ descricao | default(value='') }}</textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Imagem <span style="font-weight:400; color:var(--text-muted); text-transform:none;">(opcional — exibida só no detalhe do evento)</span></label>
+        <input type="hidden" name="imagem_capa" id="imagem-capa-input" value="{{ imagem_capa | default(value='') }}">
+        <div style="display:flex; align-items:flex-start; gap:12px;">
+          <button type="button" id="btn-upload-capa" class="btn btn-secondary btn-sm" style="flex-shrink:0; margin-top:2px;">
+            Escolher imagem
+          </button>
+          <span id="capa-nome" style="font-size:12.5px; color:var(--text-muted); align-self:center;">
+            {% if imagem_capa %}{{ imagem_capa }}{% else %}Nenhuma imagem selecionada{% endif %}
+          </span>
+        </div>
+        {% if imagem_capa %}
+        <div id="capa-preview" style="margin-top:10px;">
+          <img src="{{ imagem_capa }}" alt="Imagem do evento" style="max-height:160px; border-radius:7px; border:1px solid var(--border);">
+          <button type="button" id="btn-remover-capa" class="btn btn-danger btn-sm" style="margin-top:6px; display:block;">Remover imagem</button>
+        </div>
+        {% else %}
+        <div id="capa-preview" style="margin-top:10px; display:none;">
+          <img id="capa-preview-img" src="" alt="Imagem do evento" style="max-height:160px; border-radius:7px; border:1px solid var(--border);">
+          <button type="button" id="btn-remover-capa" class="btn btn-danger btn-sm" style="margin-top:6px; display:block;">Remover imagem</button>
+        </div>
+        {% endif %}
+        <div id="capa-erro" class="erro" style="display:none; margin-top:6px;"></div>
+      </div>
+
+    </div>
+
+    <div class="form-side">
+
+      <div class="side-card">
+        <div class="side-card-title">Quando e onde</div>
+        <div class="form-group">
+          <label class="form-label">Data e hora</label>
+          <input type="datetime-local" name="data_hora" class="form-input" value="{{ data_hora }}" required>
+        </div>
+        <div class="form-group" style="margin-top:12px;">
+          <label class="form-label">Local <span style="font-weight:400; color:var(--text-muted); text-transform:none;">(opcional)</span></label>
+          <input type="text" name="local" class="form-input" value="{{ local | default(value='') }}" placeholder="Ex: Auditório CEFET/RJ Maracanã">
+        </div>
+      </div>
+
+      <div class="side-card">
+        <div class="side-card-title">Link de detalhes <span style="font-weight:400; text-transform:none;">(opcional)</span></div>
+        <div class="form-group">
+          <input type="text" name="link_detalhes" class="form-input" value="{{ link_detalhes | default(value='') }}" placeholder="/paginas/assembleia-2026 ou https://...">
+        </div>
+      </div>
+
+      <div class="side-card">
+        <div class="side-card-title">Publicação</div>
+        <div class="toggle-row">
+          <span class="toggle-label">Publicado</span>
+          <input type="checkbox" name="publicado" class="toggle-input" {% if publicado %}checked="checked"{% endif %}>
+        </div>
+        <p style="font-size:11.5px; color:var(--text-muted); margin-top:4px;">Só eventos publicados aparecem na agenda pública.</p>
+      </div>
+
+    </div>
+  </div>
+</form>
+
+<script>
+  // ── Upload de imagem do evento ────────────────────────────
+  // Mesmo padrão da imagem de capa de artigos: sem arrow functions,
+  // sem template literals, IIFE para isolar escopo.
+  (function() {
+    var btnUpload  = document.getElementById('btn-upload-capa');
+    var btnRemover = document.getElementById('btn-remover-capa');
+    var inputCapa  = document.getElementById('imagem-capa-input');
+    var preview    = document.getElementById('capa-preview');
+    var nomeSpan   = document.getElementById('capa-nome');
+    var erroDiv    = document.getElementById('capa-erro');
+
+    if (!btnUpload) { return; }
+
+    btnUpload.addEventListener('click', function() {
+      var fileInput = document.createElement('input');
+      fileInput.setAttribute('type', 'file');
+      fileInput.setAttribute('accept', 'image/png,image/jpeg,image/gif,image/webp');
+      fileInput.click();
+
+      fileInput.onchange = function() {
+        var file = fileInput.files[0];
+        if (!file) { return; }
+
+        var formData = new FormData();
+        formData.append('imagem', file);
+        formData.append('_csrf', '{{ csrf_token }}');
+
+        fetch('/admin/upload/imagem', { method: 'POST', body: formData })
+          .then(function(resp) { return resp.json(); })
+          .then(function(dados) {
+            if (dados.url) {
+              inputCapa.value = dados.url;
+              nomeSpan.textContent = dados.url;
+              erroDiv.style.display = 'none';
+              var img = preview.querySelector('img');
+              if (img) { img.src = dados.url; }
+              preview.style.display = 'block';
+            } else {
+              erroDiv.textContent = dados.erro || 'Erro desconhecido no upload.';
+              erroDiv.style.display = 'block';
+              setTimeout(function() { erroDiv.style.display = 'none'; }, 4000);
+            }
+          })
+          .catch(function() {
+            erroDiv.textContent = 'Erro de conexão no upload.';
+            erroDiv.style.display = 'block';
+            setTimeout(function() { erroDiv.style.display = 'none'; }, 4000);
+          });
+      };
+    });
+
+    if (btnRemover) {
+      btnRemover.addEventListener('click', function() {
+        inputCapa.value = '';
+        nomeSpan.textContent = 'Nenhuma imagem selecionada';
+        preview.style.display = 'none';
+        var img = preview.querySelector('img');
+        if (img) { img.src = ''; }
+      });
+    }
+  })();
+</script>
+{% endblock %}

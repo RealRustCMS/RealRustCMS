@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block titulo %}Meu Perfil{% endblock %}
+
+{% block estilos %}
+<style>
+  .form-card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .form-body { padding: 22px; display: flex; flex-direction: column; gap: 18px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+  .form-group input { padding: 9px 12px; border: 1px solid var(--border); border-radius: 7px; font-size: 13.5px; font-family: 'DM Sans', sans-serif; color: var(--text-primary); outline: none; transition: border-color .15s; }
+  .form-group input:focus { border-color: var(--accent); }
+  .form-group input[readonly] { background: var(--bg-elevated); color: var(--text-muted); cursor: not-allowed; }
+  .form-footer { padding: 14px 22px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: flex-end; gap: 8px; background: var(--bg-elevated); }
+  .erro { color: var(--danger); font-size: 12.5px; padding: 10px 14px; background: var(--danger-bg); border: 1px solid var(--danger-bdr); border-radius: 7px; }
+  .sucesso { color: #2a7d32; font-size: 12.5px; padding: 10px 14px; background: #e6f4e7; border: 1px solid #c2dfc4; border-radius: 7px; }
+  .secao { font-size: 13px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+  .papel-badge { display: inline-flex; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+  .mfa-status { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-elevated); }
+  .mfa-status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .mfa-status-dot.ativo { background: #2a7d32; }
+  .mfa-status-dot.inativo { background: var(--text-muted); }
+  .mfa-status-texto { font-size: 13px; font-weight: 500; color: var(--text-primary); flex: 1; }
+  .mfa-status-sub { font-size: 11.5px; color: var(--text-muted); margin-top: 1px; }
+</style>
+{% endblock %}
+
+{% block conteudo %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Meu Perfil</h1>
+    <p class="page-sub">Gerencie suas informações pessoais</p>
+  </div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 20px;">
+
+  <!-- Dados básicos -->
+  <div class="form-card">
+    {% if erro_dados %}<div class="form-body" style="padding-bottom:0"><p class="erro">{{ erro_dados }}</p></div>{% endif %}
+    {% if sucesso_dados %}<div class="form-body" style="padding-bottom:0"><p class="sucesso">{{ sucesso_dados }}</p></div>{% endif %}
+    <form method="post" action="/admin/perfil/dados">
+      <div class="form-body">
+        <div class="secao">Dados básicos</div>
+        <div class="form-group">
+          <label>Nome</label>
+          <input type="text" name="nome" value="{{ usuario.nome }}" required>
+        </div>
+        <div class="form-group">
+          <label>E-mail</label>
+          <input type="email" name="email" value="{{ usuario.email }}" required>
+        </div>
+        <div class="form-group">
+          <label>Papel</label>
+          <input type="text" value="{{ usuario.papel }}" readonly>
+        </div>
+      </div>
+      <div class="form-footer">
+        <button type="submit" class="btn btn-primary">Salvar alterações</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Alterar senha -->
+  <div class="form-card">
+    {% if erro_senha %}<div class="form-body" style="padding-bottom:0"><p class="erro">{{ erro_senha }}</p></div>{% endif %}
+    {% if sucesso_senha %}<div class="form-body" style="padding-bottom:0"><p class="sucesso">{{ sucesso_senha }}</p></div>{% endif %}
+    <form method="post" action="/admin/perfil/senha">
+      <div class="form-body">
+        <div class="secao">Alterar senha</div>
+        <div class="form-group">
+          <label>Senha atual</label>
+          <input type="password" name="senha_atual" required placeholder="Sua senha atual">
+        </div>
+        <div class="form-group">
+          <label>Nova senha</label>
+          <input type="password" name="senha_nova" required placeholder="Nova senha">
+        </div>
+        <div class="form-group">
+          <label>Confirmar nova senha</label>
+          <input type="password" name="senha_confirm" required placeholder="Repita a nova senha">
+        </div>
+      </div>
+      <div class="form-footer">
+        <button type="submit" class="btn btn-primary">Alterar senha</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Autenticação em dois fatores -->
+  <div class="form-card">
+    <div class="form-body">
+      <div class="secao">Autenticação em dois fatores</div>
+
+      <!-- Status atual -->
+      {% if usuario.mfa_habilitado == 1 %}
+      <div class="mfa-status">
+        <div class="mfa-status-dot ativo"></div>
+        <div>
+          <div class="mfa-status-texto">MFA ativado</div>
+          <div class="mfa-status-sub">Seu login exige o código do app autenticador</div>
+        </div>
+      </div>
+      {% else %}
+      <div class="mfa-status">
+        <div class="mfa-status-dot inativo"></div>
+        <div>
+          <div class="mfa-status-texto">MFA desativado</div>
+          <div class="mfa-status-sub">Seu login usa apenas e-mail e senha</div>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="form-footer" style="padding: 0; border: none; background: none;">
+        {% if usuario.mfa_habilitado == 1 %}
+          <!-- Botão de reconfigurar (gera novo QR) -->
+          <a href="/admin/perfil/mfa" class="btn btn-secondary">Reconfigurar</a>
+          {% if not mfa_obrigatorio_global %}
+          <!-- Só exibe desativar se MFA_OBRIGATORIO=false no .env -->
+          <form method="post" action="/admin/perfil/mfa/desativar" style="margin:0;">
+            <button type="submit" class="btn btn-danger">Desativar MFA</button>
+          </form>
+          {% endif %}
+        {% else %}
+          <a href="/admin/perfil/mfa" class="btn btn-primary">Configurar MFA</a>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Token de API -->
+  {% if usuario.api_token %}
+  <div class="form-card">
+    <div class="form-body">
+      <div class="secao">Token de API</div>
+      <div style="font-size: 12px; color: var(--text-muted);">Seu token de acesso à API:</div>
+      <code style="font-family: 'DM Mono', monospace; font-size: 12px; background: var(--bg-elevated); padding: 10px 12px; border-radius: 7px; border: 1px solid var(--border); word-break: break-all;">{{ usuario.api_token }}</code>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

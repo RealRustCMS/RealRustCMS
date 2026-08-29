@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block titulo %}RustCMS{% endblock %} — Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/temas/{{ tema }}.css">
+  <link rel="stylesheet" href="/static/css/admin.css">
+  {% block estilos %}{% endblock %}
+</head>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var token = "{{ csrf_token }}";
+    document.querySelectorAll('form[method="post"], form[method="POST"]').forEach(function(form) {
+      var input   = document.createElement('input');
+      input.type  = 'hidden';
+      input.name  = '_csrf';
+      input.value = token;
+      form.appendChild(input);
+    });
+  });
+</script>
+<body>
+
+<aside class="sidebar">
+  <div class="s-logo">
+    <a href="/admin">
+      {% if site_logo %}
+      <img src="{{ site_logo }}" alt="{{ site_nome }}" style="width:32px; height:32px; border-radius:8px; object-fit:cover; flex-shrink:0;">
+      {% else %}
+      <div class="logo-mark">{{ site_nome | truncate(length=1, end="") }}</div>
+      {% endif %}
+      <div>
+        <span class="logo-name">{{ site_nome }}</span>
+        <span class="logo-sub">Painel Administrativo</span>
+      </div>
+    </a>
+  </div>
+
+  <nav class="s-nav">
+    <span class="nav-lbl">Principal</span>
+    <a href="/admin" class="nav-item {% if pagina_ativa == 'dashboard' %}active{% endif %}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </a>
+
+    <span class="nav-lbl">Conteúdo</span>
+    <a href="/admin/artigos" class="nav-item {% if pagina_ativa == 'artigos' %}active{% endif %}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Artigos
+    </a>
+    <a href="/admin/comentarios" class="nav-item {% if pagina_ativa == 'comentarios' %}active{% endif %}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Comentários
+      {% if total_pendentes_global and total_pendentes_global > 0 %}
+      <span class="nav-badge">{{ total_pendentes_global }}</span>
+      {% endif %}
+    </a>
+    <a href="/admin/galeria" class="nav-item {% if pagina_ativa == 'galeria' %}active{% endif %}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>
+      Galeria
+    </a>
+    {% if usuario_papel == "admin" or usuario_papel == "editor" %}
+    <a href="/admin/taxonomias" class="nav-item {% if pagina_ativa == 'taxonomias' %}active{% endif %}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+      Categorias e Tags
+    </a>
+    {% endif %}
+    {% if usuario_papel == "admin" %}
+    <a href="/admin/paginas" class="nav-item {% if pagina_ativa == 'paginas' %}active{% endif %}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>
+      Páginas
+    </a>
+    <a href="/admin/eventos" class="nav-item {% if pagina_ativa == 'eventos' %}active{% endif %}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Eventos
+    </a>
+    <a href="/admin/menu" class="nav-item {% if pagina_ativa == 'menu' %}active{% endif %}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      Menu
+    </a>
+    {% endif %}
+
+    <span class="nav-lbl">Sistema</span>
+    {% if usuario_papel == "admin" %}
+    <a href="/admin/usuarios" class="nav-item {% if pagina_ativa == 'usuarios' %}active{% endif %}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Usuários
+    </a>
+    <a href="/admin/membros" class="nav-item {% if pagina_ativa == 'membros' %}active{% endif %}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="23" y1="11" x2="17" y2="11"/><line x1="20" y1="8" x2="20" y2="14"/></svg>
+      Membros
+    </a>
+    <a href="/admin/configuracoes" class="nav-item {% if pagina_ativa == 'configuracoes' %}active{% endif %}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Configurações
+    </a>
+    {% endif %}
+    <a href="/" target="_blank" class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15,3 21,3 21,9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      Ver site
+    </a>
+  </nav>
+
+  <div class="s-footer">
+    <a href="/admin/perfil" class="user-pill" style="text-decoration:none;">
+      <div class="user-av">{{ usuario_nome | truncate(length=1, end="") }}</div>
+      <div>
+        <div class="user-name">{{ usuario_nome }}</div>
+        <div class="user-role">{{ usuario_papel }}</div>
+      </div>
+    </a>
+    <form method="post" action="/logout" style="margin-top:4px">
+      <button type="submit" class="nav-item" style="width:100%; background:none; border:none; cursor:pointer;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Sair
+      </button>
+    </form>
+  </div>
+</aside>
+
+<div class="main">
+    <header class="topbar">
+      <form method="get" action="/admin/busca" style="display:flex; gap:6px; flex:1; max-width:360px; align-items:center;">
+        <input type="text" name="q" placeholder="Buscar artigos, páginas..." style="flex:1; padding:7px 10px; border:1px solid var(--border); border-radius:6px; font-size:13px; font-family:'DM Sans',sans-serif; outline:none; height:34px;">
+        <button type="submit" style="padding:0 12px; background:var(--accent); color:#fff; border:none; border-radius:6px; font-size:13px; cursor:pointer; height:34px; display:flex; align-items:center;">→</button>
+      </form>
+      {% block topbar_acoes %}{% endblock %}
+    </header>
+
+  <div class="page">
+    {% block conteudo %}{% endblock %}
+  </div>
+</div>
+
+</body>
+</html>

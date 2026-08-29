@@ -1,0 +1,13 @@
+pub mod artigos;
+pub mod avaliacoes;
+pub mod busca;
+pub mod categorias;
+pub mod comentarios;
+pub mod configuracoes;
+pub mod eventos;
+pub mod galeria;
+pub mod membros;
+pub mod menus;
+pub mod page_views;
+pub mod paginas;
+pub mod usuarios;

@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+
+{% block titulo %}Dashboard{% endblock %}
+
+{% block topbar_acoes %}
+{% if usuario_papel == "admin" or usuario_papel == "editor" %}
+<a href="/admin/artigos/novo" class="btn btn-primary">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  Novo Artigo
+</a>
+{% endif %}
+{% endblock %}
+
+{% block conteudo %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Dashboard</h1>
+    <p class="page-sub">Visão geral — {{ site_nome }}</p>
+  </div>
+</div>
+
+<div class="stats" style="grid-template-columns: repeat(5, 1fr);">
+  <div class="stat">
+    <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg></div>
+    <div class="stat-val">{{ total_artigos }}</div>
+    <div class="stat-lbl">Total de artigos</div>
+  </div>
+  <div class="stat">
+    <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/></svg></div>
+    <div class="stat-val">{{ total_publicados }}</div>
+    <div class="stat-lbl">Publicados</div>
+  </div>
+  <div class="stat">
+    <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/></svg></div>
+    <div class="stat-val">{{ total_rascunhos }}</div>
+    <div class="stat-lbl">Rascunhos</div>
+  </div>
+  <div class="stat">
+    <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+    <div class="stat-val">{{ total_usuarios }}</div>
+    <div class="stat-lbl">Usuários</div>
+  </div>
+  <div class="stat">
+    <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
+    <div class="stat-val">{{ total_views }}</div>
+    <div class="stat-lbl">Visualizações</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head">
+    <span class="card-title">Artigos recentes</span>
+    <a href="/admin/artigos" class="btn btn-secondary btn-sm">Ver todos</a>
+  </div>
+  <div class="tw">
+    <table>
+      <thead>
+        <tr>
+          <th>Título</th>
+          <th>Status</th>
+          <th>Data</th>
+          <th style="text-align:right">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for artigo in artigos_recentes %}
+        <tr>
+          <td>
+            <a href="/admin/artigos/{{ artigo.id }}/editar" class="art-title">{{ artigo.titulo }}</a>
+          </td>
+          <td>
+            {% if artigo.status == "publicado" %}
+              <span class="badge badge-pub"><span class="badge-dot"></span>Publicado</span>
+            {% else %}
+              <span class="badge badge-draft"><span class="badge-dot"></span>Rascunho</span>
+            {% endif %}
+          </td>
+          <td class="muted mono tsm">{{ artigo.criado_em | date(format="%d/%m/%Y") }}</td>
+          <td>
+            <div class="acts">
+              {% if usuario_papel == "admin" or usuario_papel == "editor" %}
+              <a href="/admin/artigos/{{ artigo.id }}/editar" class="btn btn-secondary btn-sm">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+        {% if artigos_recentes | length == 0 %}
+        <tr>
+          <td colspan="4" style="text-align:center; color:var(--text-muted); padding: 32px;">
+            Nenhum artigo ainda. <a href="/admin/artigos/novo" style="color:var(--accent)">Criar o primeiro</a>
+          </td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{# ── Mais bem avaliados ───────────────────────────────────────────────────────
+   mais_avaliados é um Vec<ArtigoAvaliado> — struct com id, titulo, slug, media, total.
+   O método estrelas() retorna Vec<u8> com 5 posições: 2=cheia, 1=meia, 0=vazia.
+   O card só aparece se houver pelo menos um artigo com votos suficientes.
+#}
+{% if mais_avaliados | length > 0 %}
+<div class="card" style="margin-top: 16px;">
+  <div class="card-head">
+    <span class="card-title">Mais bem avaliados</span>
+  </div>
+  <div class="tw">
+    <table>
+      <thead>
+        <tr>
+          <th>Título</th>
+          <th>Avaliação</th>
+          <th style="text-align:right">Votos</th>
+          <th style="text-align:right">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for av in mais_avaliados %}
+        <tr>
+          <td>
+            <a href="/artigos/{{ av.slug }}" target="_blank" class="art-title">{{ av.titulo }}</a>
+          </td>
+          <td>
+            <div style="display:inline-flex; align-items:center; gap:6px;">
+              <span style="display:inline-flex; gap:2px;">
+                {% for estado in av.estrelas %}
+                  {% if estado == 2 %}<span style="color:var(--accent); font-size:14px;">★</span>
+                  {% elif estado == 1 %}<span style="color:var(--accent); font-size:14px; opacity:.55;">★</span>
+                  {% else %}<span style="color:var(--border); font-size:14px;">☆</span>
+                  {% endif %}
+                {% endfor %}
+              </span>
+              <span class="mono tsm muted">{{ av.media_formatada }}</span>
+            </div>
+          </td>
+          <td class="mono tsm" style="text-align:right">{{ av.total }}</td>
+          <td>
+            <div class="acts">
+              {% if usuario_papel == "admin" or usuario_papel == "editor" %}
+              <a href="/admin/artigos/{{ av.id }}/editar" class="btn btn-secondary btn-sm">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{# ── Páginas estáticas mais visitadas ─────────────────────────────────────────
+   views_paginas é um Vec<PageView> filtrado por url LIKE '/paginas/%'.
+   O card só aparece se houver pelo menos uma página estática com visitas,
+   então não polui o dashboard de instalações que não usam páginas estáticas.
+#}
+{% if views_paginas | length > 0 %}
+<div class="card" style="margin-top: 16px;">
+  <div class="card-head">
+    <span class="card-title">Páginas estáticas mais visitadas</span>
+    <a href="/admin/paginas" class="btn btn-secondary btn-sm">Gerenciar páginas</a>
+  </div>
+  <div class="tw">
+    <table>
+      <thead>
+        <tr>
+          <th>URL</th>
+          <th style="text-align:right">Visualizações</th>
+          <th style="text-align:right">Última visita</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for pv in views_paginas %}
+        <tr>
+          <td>
+            <a href="{{ pv.url }}" target="_blank" style="color:var(--accent); text-decoration:none; font-size:13px;">{{ pv.url }}</a>
+          </td>
+          <td class="mono tsm" style="text-align:right">{{ pv.visualizacoes }}</td>
+          <td class="muted mono tsm" style="text-align:right">{{ pv.ultima_visita | date(format="%d/%m/%Y") }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<div class="card" style="margin-top: 16px;">
+  <div class="card-head">
+    <span class="card-title">URLs mais acessadas</span>
+    <a href="/admin/views" class="btn btn-secondary btn-sm">Ver todas</a>
+  </div>
+  <div class="tw">
+    <table>
+      <thead>
+        <tr>
+          <th>URL</th>
+          <th style="text-align:right">Visualizações</th>
+          <th style="text-align:right">Última visita</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for pv in mais_visitadas %}
+        <tr>
+          <td><a href="{{ pv.url }}" target="_blank" style="color:var(--accent); text-decoration:none;">{{ pv.url }}</a></td>
+          <td class="mono tsm" style="text-align:right">{{ pv.visualizacoes }}</td>
+          <td class="muted mono tsm" style="text-align:right">{{ pv.ultima_visita | date(format="%d/%m/%Y") }}</td>
+        </tr>
+        {% endfor %}
+        {% if mais_visitadas | length == 0 %}
+        <tr>
+          <td colspan="3" style="text-align:center; color:var(--text-muted); padding:24px;">Nenhuma visita registrada ainda.</td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

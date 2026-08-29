@@ -1,0 +1,43 @@
+{% extends "publico/deco/base.html" %}
+
+{% block titulo %}{{ evento.titulo }} — {{ site_nome }}{% endblock %}
+
+{% block meta_seo %}
+<meta name="description" content="{% if evento.descricao %}{{ evento.descricao }}{% else %}{{ site_descricao }}{% endif %}">
+<link rel="canonical" href="{{ base_url }}/eventos/{{ evento.slug }}">
+<meta property="og:type" content="article">
+<meta property="og:title" content="{{ evento.titulo }}">
+<meta property="og:description" content="{% if evento.descricao %}{{ evento.descricao }}{% else %}{{ site_descricao }}{% endif %}">
+<meta property="og:url" content="{{ base_url }}/eventos/{{ evento.slug }}">
+{% if evento.imagem_capa %}<meta property="og:image" content="{{ base_url }}{{ evento.imagem_capa }}">{% endif %}
+<meta property="og:site_name" content="{{ site_nome }}">
+{% endblock %}
+
+{% block estilos %}
+.evento-corpo{font-family:var(--serif);font-size:17px;color:var(--text2);line-height:1.9;white-space:pre-line}
+.btn-deco{font-family:var(--display);font-size:11px;padding:14px 32px;background:var(--gold);color:#0B0A08;font-weight:600;letter-spacing:3px;border:1px solid var(--gold);display:inline-block;margin-top:32px}
+{% endblock %}
+
+{% block conteudo %}
+<article style="max-width:700px;margin:0 auto;padding:80px 24px">
+<a href="/eventos" style="display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;color:var(--text3);margin-bottom:40px;letter-spacing:1px">&larr; TODOS OS EVENTOS</a>
+<div style="margin-bottom:32px">
+<h1 style="font-family:var(--display);font-size:clamp(28px,4vw,44px);color:var(--text);margin:0 0 20px;font-weight:400;line-height:1.3;letter-spacing:2px">{{ evento.titulo }}</h1>
+<div style="display:flex;flex-wrap:wrap;align-items:center;gap:16px;font-family:var(--mono);font-size:11px;color:var(--text3);letter-spacing:1px">
+<span>{{ evento.data_hora | date(format="%d/%m/%Y às %H:%M") }}</span>
+{% if evento.local %}<span style="color:var(--gold);opacity:.3">&#9670;</span><span>{{ evento.local }}</span>{% endif %}
+</div>
+</div>
+{% if evento.imagem_capa %}
+<div class="deco-border" style="margin-bottom:32px">
+<img src="{{ evento.imagem_capa }}" alt="{{ evento.titulo }}" style="width:100%;display:block">
+</div>
+{% endif %}
+{% if evento.descricao %}
+<div class="evento-corpo">{{ evento.descricao }}</div>
+{% endif %}
+{% if evento.link_detalhes %}
+<a href="{{ evento.link_detalhes }}" target="_blank" rel="noopener" class="btn-deco">MAIS INFORMAÇÕES &rarr;</a>
+{% endif %}
+</article>
+{% endblock %}

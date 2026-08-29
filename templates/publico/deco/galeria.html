@@ -1,0 +1,54 @@
+{% extends "publico/deco/base.html" %}
+
+{% block titulo %}Galerias — {{ site_nome }}{% endblock %}
+
+{% block estilos %}
+.album-card{display:block;overflow:hidden}
+.album-thumb{height:280px;background:linear-gradient(135deg,#1a1608,#0d0b04);position:relative}
+.album-thumb img{width:100%;height:100%;object-fit:cover;display:block;position:absolute;inset:0}
+.album-overlay{position:absolute;inset:0;background:linear-gradient(0deg,rgba(11,10,8,.85) 0%,transparent 60%)}
+.album-caption{position:absolute;bottom:0;left:0;right:0;padding:24px;text-align:center}
+.album-caption h3{font-family:var(--display);font-size:16px;color:var(--gold-light);margin:0 0 8px;font-weight:400;letter-spacing:2px}
+.album-meta{display:flex;align-items:center;justify-content:center;gap:10px}
+.album-meta span{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:2px}
+.album-meta-line{width:20px;height:1px;background:var(--gold);opacity:.4}
+{% endblock %}
+
+{% block conteudo %}
+<section style="max-width:1200px;margin:0 auto;padding:80px 24px">
+<nav style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-bottom:40px;display:flex;gap:8px;align-items:center;letter-spacing:1px">
+<a href="/" style="color:var(--text3)">Home</a>
+<span style="color:var(--gold);opacity:.4">&#9670;</span>
+<span style="color:var(--text2)">Galerias</span>
+</nav>
+<div style="margin-bottom:52px">
+<div class="deco-heading" style="justify-content:flex-start">
+<span style="font-family:var(--display);font-size:11px;color:var(--gold);letter-spacing:5px">ÁLBUNS</span>
+</div>
+<h1 style="font-family:var(--display);font-size:clamp(32px,5vw,52px);color:var(--text);margin:12px 0 0;font-weight:400;letter-spacing:4px">Galerias</h1>
+</div>
+
+{% if albuns | length > 0 %}
+<div class="grid-3" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:24px">
+{% for album in albuns %}
+<a href="/galeria/{{ album.id }}" class="deco-border album-card">
+<div class="album-thumb">
+{% if album.capa_url %}<img src="{{ album.capa_url }}" alt="{{ album.titulo }}">{% endif %}
+<div class="album-overlay"></div>
+<div class="album-caption">
+<h3>{{ album.titulo }}</h3>
+<div class="album-meta">
+<div class="album-meta-line"></div>
+<span>{{ album.criado_em | date(format="%d/%m/%Y") }}</span>
+<div class="album-meta-line"></div>
+</div>
+</div>
+</div>
+</a>
+{% endfor %}
+</div>
+{% else %}
+<div style="text-align:center;padding:64px 0;color:var(--text3);font-family:var(--serif);font-style:italic">Nenhum álbum publicado ainda.</div>
+{% endif %}
+</section>
+{% endblock %}

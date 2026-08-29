@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block titulo %}Membros{% endblock %}
+
+{% block estilos %}
+<style>
+  .badge-ativo { background:#deeade; color:#415D43; border:1px solid #b8ccb8; }
+  .badge-inativo { background:var(--danger-bg); color:var(--danger); border:1px solid var(--danger-bdr); }
+  .badge-oauth { background:#e8f0fe; color:#1a56cc; border:1px solid #c0d0f8; }
+</style>
+{% endblock %}
+
+{% block conteudo %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Membros</h1>
+    <p class="page-sub">Gerencie os membros da área restrita.</p>
+  </div>
+</div>
+
+{% if membros %}
+<div class="card">
+  <div class="tw">
+    <table>
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>E-mail</th>
+          <th>Acesso</th>
+          <th>Status</th>
+          <th>Cadastro</th>
+          <th style="text-align:right">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in membros %}
+        <tr>
+          <td style="font-weight:500; color:var(--text-primary)">{{ m.nome }}</td>
+          <td class="muted">{{ m.email }}</td>
+          <td>
+            {% if m.oauth_provider %}
+            <span class="badge badge-oauth">{{ m.oauth_provider }}</span>
+            {% else %}
+            <span class="muted tsm">local</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if m.ativo %}
+            <span class="badge badge-ativo">Ativo</span>
+            {% else %}
+            <span class="badge badge-inativo">Inativo</span>
+            {% endif %}
+          </td>
+          <td class="muted mono tsm">{{ m.criado_em | date(format="%d/%m/%Y") }}</td>
+          <td>
+            <div class="acts">
+              <a href="/admin/membros/{{ m.id }}/editar" class="btn btn-secondary btn-sm">Editar</a>
+              {% if m.ativo %}
+              <form method="post" action="/admin/membros/{{ m.id }}/desativar" onsubmit="return confirm('Desativar este membro?')">
+                <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+                <button type="submit" class="btn btn-secondary btn-sm">Desativar</button>
+              </form>
+              {% else %}
+              <form method="post" action="/admin/membros/{{ m.id }}/ativar">
+                <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+                <button type="submit" class="btn btn-secondary btn-sm">Ativar</button>
+              </form>
+              {% endif %}
+              <form method="post" action="/admin/membros/{{ m.id }}/deletar" onsubmit="return confirm('Deletar permanentemente este membro?')">
+                <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+                <button type="submit" class="btn btn-danger btn-sm">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3,6 5,6 21,6"/><path d="M19,6l-1,14a2,2,0,0,1-2,2H8a2,2,0,0,1-2-2L5,6"/></svg>
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="card" style="text-align:center; padding:48px; color:var(--text-muted); font-size:14px;">
+  Nenhum membro cadastrado ainda.
+</div>
+{% endif %}
+{% endblock %}

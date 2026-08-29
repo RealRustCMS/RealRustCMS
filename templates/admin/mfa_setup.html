@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Configurar autenticação em dois fatores — {{ site_nome }}</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="/static/css/temas/{{ tema }}.css">
+        <style>
+            *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+            body {
+                font-family: 'DM Sans', sans-serif;
+                background: var(--bg-page);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 100vh;
+                padding: 24px 16px;
+            }
+            .card {
+                background: var(--bg-surface);
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                padding: 36px 32px;
+                width: 100%;
+                max-width: 400px;
+                box-shadow: 0 4px 24px var(--accent-shadow);
+            }
+            .logo-wrap {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 24px;
+            }
+            .logo-mark {
+                width: 32px;
+                height: 32px;
+                background: var(--accent);
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 14px;
+                font-weight: 700;
+                color: #fff;
+                flex-shrink: 0;
+            }
+            h1 {
+                font-size: 16px;
+                font-weight: 600;
+                color: var(--text-primary);
+                line-height: 1.2;
+            }
+            h1 span {
+                display: block;
+                font-size: 11px;
+                font-weight: 400;
+                color: var(--text-muted);
+                margin-top: 2px;
+            }
+            .passo {
+                font-size: 11px;
+                font-weight: 600;
+                color: var(--accent);
+                text-transform: uppercase;
+                letter-spacing: .5px;
+                margin-bottom: 6px;
+            }
+            .passo-titulo {
+                font-size: 14px;
+                font-weight: 600;
+                color: var(--text-primary);
+                margin-bottom: 8px;
+            }
+            .passo-desc {
+                font-size: 13px;
+                color: var(--text-secondary);
+                line-height: 1.5;
+                margin-bottom: 16px;
+            }
+            .qr-wrap {
+                display: flex;
+                justify-content: center;
+                margin-bottom: 18px;
+            }
+            .qr-wrap img {
+                width: 180px;
+                height: 180px;
+                border-radius: 10px;
+                border: 4px solid var(--bg-surface);
+                outline: 1px solid var(--border);
+            }
+            .secret-label {
+                font-size: 11.5px;
+                color: var(--text-muted);
+                margin-bottom: 6px;
+            }
+            .secret-code {
+                font-family: 'DM Mono', monospace;
+                font-size: 13px;
+                background: var(--bg-elevated);
+                padding: 10px 12px;
+                border-radius: 7px;
+                border: 1px solid var(--border);
+                word-break: break-all;
+                color: var(--text-secondary);
+                margin-bottom: 22px;
+                letter-spacing: 1px;
+            }
+            .divisor {
+                height: 1px;
+                background: var(--border);
+                margin: 20px 0;
+            }
+            label {
+                font-size: 12px;
+                font-weight: 500;
+                color: var(--text-secondary);
+                display: block;
+                margin-bottom: 5px;
+            }
+            input[type="text"] {
+                width: 100%;
+                padding: 9px 12px;
+                border: 1px solid var(--border);
+                border-radius: 7px;
+                font-size: 22px;
+                font-family: 'DM Sans', sans-serif;
+                color: var(--text-primary);
+                background: var(--bg-surface);
+                margin-bottom: 14px;
+                outline: none;
+                transition: border-color 0.15s;
+                letter-spacing: 6px;
+                text-align: center;
+            }
+            input[type="text"]:focus { border-color: var(--accent); }
+            button {
+                width: 100%;
+                padding: 10px;
+                border-radius: 7px;
+                font-size: 14px;
+                font-weight: 500;
+                font-family: 'DM Sans', sans-serif;
+                cursor: pointer;
+                transition: background 0.15s;
+                background: var(--accent);
+                color: #fff;
+                border: none;
+            }
+            button:hover { background: var(--accent-hover); }
+            .voltar {
+                display: block;
+                text-align: center;
+                margin-top: 16px;
+                font-size: 12.5px;
+                color: var(--text-muted);
+                text-decoration: none;
+            }
+            .voltar:hover { color: var(--text-secondary); }
+            .erro {
+                color: var(--danger);
+                font-size: 12.5px;
+                padding: 10px 14px;
+                background: var(--danger-bg);
+                border: 1px solid var(--danger-bdr);
+                border-radius: 7px;
+                margin-bottom: 14px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="card">
+            <div class="logo-wrap">
+                {% if site_logo %}
+                <img src="{{ site_logo }}" alt="{{ site_nome }}" style="width:32px; height:32px; border-radius:8px; object-fit:cover; flex-shrink:0;">
+                {% else %}
+                <div class="logo-mark">{{ site_nome | truncate(length=1, end="") }}</div>
+                {% endif %}
+                <h1>
+                    {{ site_nome }}
+                    <span>Autenticação em dois fatores</span>
+                </h1>
+            </div>
+
+            {% if erro %}
+            <p class="erro">{{ erro }}</p>
+            {% endif %}
+
+            <!-- Passo 1: escanear o QR Code -->
+            <div class="passo">Passo 1</div>
+            <div class="passo-titulo">Escaneie o QR Code</div>
+            <p class="passo-desc">
+                Abra o Google Authenticator, Microsoft Authenticator ou outro app compatível
+                e escaneie o código abaixo.
+            </p>
+
+            <div class="qr-wrap">
+                <img src="data:image/png;base64,{{ qr_base64 }}" alt="QR Code MFA">
+            </div>
+
+            <!-- Chave manual para quem não consegue escanear -->
+            <p class="secret-label">Não consegue escanear? Digite a chave manualmente:</p>
+            <div class="secret-code">{{ secret }}</div>
+
+            <div class="divisor"></div>
+
+            <!-- Passo 2: confirmar com o código gerado -->
+            <div class="passo">Passo 2</div>
+            <div class="passo-titulo">Confirme o código</div>
+            <p class="passo-desc">
+                Após escanear, informe o código de 6 dígitos exibido no app para confirmar a configuração.
+            </p>
+
+            {% if contexto == "perfil" %}
+            <form method="post" action="/admin/perfil/mfa/ativar">
+            {% else %}
+            <form method="post" action="/login/mfa/configurar">
+            {% endif %}
+                <input type="hidden" name="_csrf" value="{{ csrf }}">
+                <label>Código de verificação</label>
+                <input
+                    type="text"
+                    name="codigo"
+                    inputmode="numeric"
+                    autocomplete="one-time-code"
+                    maxlength="7"
+                    placeholder="000000"
+                    required
+                    autofocus
+                >
+                <button type="submit">Ativar autenticação em dois fatores</button>
+            </form>
+
+            {% if contexto == "perfil" %}
+            <a href="/admin/perfil" class="voltar">← Cancelar</a>
+            {% else %}
+            <a href="/logout" class="voltar">← Cancelar e voltar ao login</a>
+            {% endif %}
+        </div>
+    </body>
+</html>

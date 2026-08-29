@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500;600;700&family=Poiret+One&display=swap" rel="stylesheet">
+<style>
+@keyframes cursorBlink { 0%,100%{opacity:1} 50%{opacity:0} }
+@keyframes heroGlow { 0%,100%{text-shadow:0 0 20px rgba(50,205,50,.3),0 0 40px rgba(50,205,50,.1)} 50%{text-shadow:0 0 30px rgba(50,205,50,.5),0 0 60px rgba(50,205,50,.2)} }
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);transition:background .3s,color .3s;font-family:'Libre Baskerville',Georgia,serif}
+a{text-decoration:none}
+:root{--bg:#0A0A0A;--bg2:#111;--bg3:#1a1a1a;--bg4:#222;--border:rgba(255,255,255,.08);--text:#e0e0e0;--text2:#999;--text3:#666;--green:#32CD32;--green-dim:rgba(50,205,50,.15);--green-bright:rgba(50,205,50,.6);--gold:#C9A84C;--gold-dim:rgba(201,168,76,.15);--gold-bright:rgba(201,168,76,.5);--card-bg:#141414;--card-border:rgba(255,255,255,.06);--serif:'Libre Baskerville',Georgia,serif;--mono:'JetBrains Mono',monospace;--display:'Poiret One',sans-serif}
+[data-theme="light"]{--bg:#FAFAF7;--bg2:#F0EEE9;--bg3:#E8E5DD;--bg4:#DDD9CF;--border:rgba(0,0,0,.08);--text:#1a1a1a;--text2:#555;--text3:#888;--green:#1a8a1a;--green-dim:rgba(26,138,26,.1);--green-bright:rgba(26,138,26,.4);--gold:#8B7230;--gold-dim:rgba(139,114,48,.1);--gold-bright:rgba(139,114,48,.3);--card-bg:#fff;--card-border:rgba(0,0,0,.06)}
+@media(max-width:768px){.sidebar{display:none!important}.article-layout{flex-direction:column!important}.masonry{columns:2!important}.nav-links{display:none!important}.hamburger{display:flex!important}}
+@media(max-width:480px){.masonry{columns:1!important}.grid-articles{grid-template-columns:1fr!important}.grid-features{grid-template-columns:1fr!important}.grid-galleries{grid-template-columns:1fr!important}}
+</style>
+<title>Arquitetura do RustCMS — RustCMS</title>
+</head>
+<body>
+<header style="position:fixed;top:0;left:0;right:0;z-index:100;background:var(--bg);border-bottom:1px solid var(--border);backdrop-filter:blur(12px);transition:background .3s">
+<div style="max-width:1200px;margin:0 auto;padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between">
+<a href="home.html" style="display:flex;align-items:center;gap:12px;color:var(--text)">
+<div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:1.5px solid var(--gold);position:relative">
+<span style="font-family:var(--mono);font-size:18px;color:var(--green);font-weight:700">></span>
+<div style="position:absolute;top:-3px;left:-3px;width:6px;height:6px;border-top:1.5px solid var(--gold);border-left:1.5px solid var(--gold)"></div>
+<div style="position:absolute;top:-3px;right:-3px;width:6px;height:6px;border-top:1.5px solid var(--gold);border-right:1.5px solid var(--gold)"></div>
+<div style="position:absolute;bottom:-3px;left:-3px;width:6px;height:6px;border-bottom:1.5px solid var(--gold);border-left:1.5px solid var(--gold)"></div>
+<div style="position:absolute;bottom:-3px;right:-3px;width:6px;height:6px;border-bottom:1.5px solid var(--gold);border-right:1.5px solid var(--gold)"></div>
+</div>
+<span style="font-family:var(--display);font-size:22px;letter-spacing:2px">RustCMS</span>
+</a>
+<nav style="display:flex;align-items:center;gap:32px" class="nav-links">
+<a href="home.html" style="font-family:var(--mono);font-size:13px;color:var(--text2);letter-spacing:1px">Home</a>
+<a href="artigos.html" style="font-family:var(--mono);font-size:13px;color:var(--green);letter-spacing:1px">Artigos</a>
+<a href="galerias.html" style="font-family:var(--mono);font-size:13px;color:var(--text2);letter-spacing:1px">Galerias</a>
+<button onclick="toggleTheme()" id="themeBtn" style="background:none;border:1px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-family:var(--mono);font-size:12px;color:var(--text2)">☀</button>
+</nav>
+</div>
+</header>
+<main style="padding-top:64px">
+<article style="max-width:1200px;margin:0 auto;padding:80px 24px">
+<nav style="font-family:var(--mono);font-size:12px;color:var(--text3);margin-bottom:40px;display:flex;gap:8px;align-items:center">
+<a href="home.html" style="color:var(--text3)">Home</a>
+<span style="color:var(--gold)">›</span>
+<a href="artigos.html" style="color:var(--text3)">Artigos</a>
+<span style="color:var(--gold)">›</span>
+<span style="color:var(--text2)">Arquitetura do RustCMS</span>
+</nav>
+<div class="article-layout" style="display:flex;gap:60px;align-items:flex-start">
+<div style="flex:1;min-width:0">
+<div style="display:flex;gap:10px;margin-bottom:20px">
+<span style="font-family:var(--mono);font-size:11px;background:var(--green-dim);color:var(--green);padding:4px 12px;border-radius:3px">Arquitetura</span>
+<span style="font-family:var(--mono);font-size:11px;background:var(--gold-dim);color:var(--gold);padding:4px 12px;border-radius:3px">Rust</span>
+</div>
+<h1 style="font-family:var(--serif);font-size:clamp(28px,4vw,42px);color:var(--text);margin:0 0 20px;font-weight:400;line-height:1.3">Arquitetura do RustCMS: Do Request à Resposta</h1>
+<div style="display:flex;align-items:center;gap:16px;font-family:var(--mono);font-size:12px;color:var(--text3);margin-bottom:40px;padding-bottom:24px;border-bottom:1px solid var(--border)">
+<span>15 Ago 2025</span>
+<span style="color:var(--border)">·</span>
+<span>12 min de leitura</span>
+<div style="margin-left:auto;display:flex;gap:12px">
+<a href="#" style="color:var(--text3);font-size:14px" title="Compartilhar">🔗</a>
+<a href="#" style="color:var(--text3);font-size:14px" title="Twitter">𝕏</a>
+</div>
+</div>
+<div style="width:100%;height:360px;background:linear-gradient(135deg,var(--bg2),var(--bg3));border-radius:8px;margin-bottom:40px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border)">
+<span style="font-family:var(--mono);font-size:13px;color:var(--text3)">imagem_capa.jpg — 1200×630</span>
+</div>
+<div style="font-family:var(--serif);font-size:17px;color:var(--text);line-height:1.9">
+<p style="margin:0 0 24px">O RustCMS segue uma arquitetura em camadas simples e previsível. Cada request HTTP passa por uma pipeline bem definida antes de chegar ao template que será renderizado para o visitante.</p>
+<h2 style="font-family:var(--serif);font-size:24px;font-weight:700;margin:48px 0 16px;color:var(--text);position:relative;padding-left:20px">
+<span style="position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--green);border-radius:2px"></span>
+A Pipeline
+</h2>
+<p style="margin:0 0 24px">A jornada de um request começa no Router do Axum, passa pelos middlewares de sessão e CSRF, e chega ao Handler específico da rota.</p>
+<div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:20px 24px;margin:32px 0;overflow-x:auto">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+<span style="font-family:var(--mono);font-size:11px;color:var(--text3);letter-spacing:1px">main.rs</span>
+<span style="font-family:var(--mono);font-size:11px;color:var(--gold);letter-spacing:1px">RUST</span>
+</div>
+<pre style="font-family:var(--mono);font-size:13px;color:var(--text);margin:0;line-height:1.7;white-space:pre-wrap"><span style="color:var(--gold)">let</span> app = Router::<span style="color:var(--green)">new</span>()
+    .route(<span style="color:#e88a6a">"/"</span>, get(handlers::home))
+    .route(<span style="color:#e88a6a">"/artigos"</span>, get(handlers::listar))
+    .route(<span style="color:#e88a6a">"/artigos/{slug}"</span>, get(handlers::ver))
+    .layer(middleware::csrf)
+    .layer(middleware::sessao)
+    .with_state(state);</pre>
+</div>
+<p style="margin:0 0 24px">O Handler nunca acessa o banco de dados diretamente. Ele delega para os Services, que por sua vez chamam os Repositories. Essa separação garante testabilidade e manutenção.</p>
+<blockquote style="margin:32px 0;padding:20px 24px;border-left:3px solid var(--gold);background:var(--gold-dim);border-radius:0 8px 8px 0">
+<p style="font-family:var(--serif);font-size:16px;font-style:italic;color:var(--text);margin:0;line-height:1.7">"Router → Handlers → Services → Repositories → Database. Sempre siga essa direção."</p>
+</blockquote>
+<h2 style="font-family:var(--serif);font-size:24px;font-weight:700;margin:48px 0 16px;color:var(--text);position:relative;padding-left:20px">
+<span style="position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--green);border-radius:2px"></span>
+Templates Tera
+</h2>
+<p style="margin:0 0 24px">O RustCMS usa Tera para renderização server-side. Os templates suportam herança, macros e filtros customizados. O template base define a estrutura HTML e os blocos que cada página pode sobrescrever.</p>
+<p style="margin:0 0 24px">Cada handler injeta um contexto com as variáveis necessárias — incluindo o <code style="font-family:var(--mono);font-size:14px;background:var(--bg2);padding:2px 8px;border-radius:4px;color:var(--green)">ctx_base</code> obrigatório que alimenta o layout base com nome do site, logo, dados do usuário e token CSRF.</p>
+</div>
+</div>
+<aside class="sidebar" style="width:280px;flex-shrink:0;position:sticky;top:96px">
+<div style="padding:24px;background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px;margin-bottom:24px">
+<h4 style="font-family:var(--mono);font-size:11px;color:var(--gold);letter-spacing:3px;margin:0 0 20px">RECENTES</h4>
+<div style="display:flex;flex-direction:column;gap:16px">
+<a href="#" style="font-family:var(--serif);font-size:14px;color:var(--text2);line-height:1.5">Configurando OAuth/OIDC no RustCMS</a>
+<a href="#" style="font-family:var(--serif);font-size:14px;color:var(--text2);line-height:1.5">Full-Text Search com PostgreSQL</a>
+<a href="#" style="font-family:var(--serif);font-size:14px;color:var(--text2);line-height:1.5">Área de Membros: Acesso Restrito</a>
+<a href="#" style="font-family:var(--serif);font-size:14px;color:var(--text2);line-height:1.5">Migrações com SQLx: Boas Práticas</a>
+</div>
+</div>
+<div style="padding:24px;background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px">
+<h4 style="font-family:var(--mono);font-size:11px;color:var(--gold);letter-spacing:3px;margin:0 0 16px">TAGS</h4>
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<span style="font-family:var(--mono);font-size:11px;padding:4px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:3px;color:var(--text2);cursor:pointer">Rust</span>
+<span style="font-family:var(--mono);font-size:11px;padding:4px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:3px;color:var(--text2);cursor:pointer">Axum</span>
+<span style="font-family:var(--mono);font-size:11px;padding:4px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:3px;color:var(--text2);cursor:pointer">PostgreSQL</span>
+<span style="font-family:var(--mono);font-size:11px;padding:4px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:3px;color:var(--text2);cursor:pointer">SQLx</span>
+<span style="font-family:var(--mono);font-size:11px;padding:4px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:3px;color:var(--text2);cursor:pointer">Tera</span>
+<span style="font-family:var(--mono);font-size:11px;padding:4px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:3px;color:var(--text2);cursor:pointer">OAuth</span>
+</div>
+</div>
+</aside>
+</div>
+</article>
+</main>
+<footer style="background:var(--bg2);border-top:1px solid var(--border);padding:48px 24px">
+<div style="max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px">
+<div style="display:flex;align-items:center;gap:12px">
+<span style="font-family:var(--display);font-size:18px;color:var(--text);letter-spacing:2px">RustCMS</span>
+<span style="font-family:var(--mono);font-size:11px;color:var(--text3)">v4.0</span>
+</div>
+<div style="font-family:var(--mono);font-size:11px;color:var(--text3);display:flex;gap:24px">
+<a href="#" style="color:var(--text3)">GitHub</a>
+<a href="#" style="color:var(--text3)">Docs</a>
+<a href="#" style="color:var(--text3)">Licença MIT</a>
+</div>
+<div style="font-family:var(--mono);font-size:11px;color:var(--text3)">
+Feito com <span style="color:var(--green)">Rust</span> + <span style="color:var(--gold)">Axum</span>
+</div>
+</div>
+</footer>
+<script>
+function toggleTheme(){
+var t=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';
+document.documentElement.setAttribute('data-theme',t);
+localStorage.setItem('rustcms-theme-mode',t);
+document.getElementById('themeBtn').textContent=t==='dark'?'☀':'☾';
+}
+(function(){var s=localStorage.getItem('rustcms-theme-mode');if(s){document.documentElement.setAttribute('data-theme',s);if(s==='light')document.getElementById('themeBtn').textContent='☾';}})();
+</script>
+</body>
+</html>

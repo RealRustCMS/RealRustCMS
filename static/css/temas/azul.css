@@ -1,0 +1,33 @@
+/* ─── TEMA: AZUL ─────────────────────────────────────────── */
+:root {
+  --bg-page:         #EDF2FB;
+  --bg-surface:      #ffffff;
+  --bg-elevated:     #E2EAFC;
+  --sidebar-bg:      #0f1729;
+  --sidebar-border:  rgba(255,255,255,0.07);
+  --accent:          #1a56cc;
+  --accent-hover:    #1444a8;
+  --accent-muted:    #D7E3FC;
+  --accent-shadow:   rgba(26,86,204,0.28);
+  --accent-text:     #ffffff;
+  --text-primary:    #0d1b3e;
+  --text-secondary:  #1e3a6e;
+  --text-muted:      #5b7ab5;
+  --border:          #C1D3FE;
+  --border-subtle:   #D7E3FC;
+  --border-strong:   #93B4FD;
+  --nav-hover:       rgba(193,211,254,0.15);
+  --nav-active-bg:   rgba(26,86,204,0.20);
+  --nav-active-text: #CCDBFD;
+  --user-av-bg:      rgba(26,86,204,0.40);
+  --row-hover:       #f0f4ff;
+  --btn-secondary-hover: #D7E3FC;
+  --badge-pub-bg:    #e6f4e7;
+  --badge-pub-text:  #2a7d32;
+  --badge-pub-bdr:   #c2dfc4;
+  --badge-draft-bg:  #fff8e1;
+  --badge-draft-txt: #e65100;
+  --danger:          #c0392b;
+  --danger-bg:       #fdf2f1;
+  --danger-bdr:      #f0c4c0;
+}

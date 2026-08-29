@@ -1,0 +1,86 @@
+{% extends "publico/deco/base.html" %}
+
+{% block titulo %}{{ album.titulo }} — {{ site_nome }}{% endblock %}
+
+{% block estilos %}
+.foto-item{break-inside:avoid;margin-bottom:20px;overflow:hidden;cursor:pointer}
+.foto-item img{width:100%;display:block;transition:transform .3s}
+.foto-item:hover img{transform:scale(1.03)}
+.lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.94);z-index:1000;align-items:center;justify-content:center}
+.lightbox.ativo{display:flex}
+.lightbox img{max-width:90vw;max-height:90vh;object-fit:contain}
+.lightbox-fechar{position:absolute;top:20px;right:24px;color:rgba(224,207,160,.6);font-size:28px;cursor:pointer;line-height:1;background:none;border:none}
+.lightbox-fechar:hover{color:var(--gold-light)}
+.lightbox-nav{position:absolute;top:50%;transform:translateY(-50%);color:rgba(224,207,160,.5);font-size:32px;cursor:pointer;background:none;border:none;padding:16px}
+.lightbox-nav:hover{color:var(--gold-light)}
+.lightbox-prev{left:16px}
+.lightbox-next{right:16px}
+{% endblock %}
+
+{% block conteudo %}
+<section style="max-width:1200px;margin:0 auto;padding:80px 24px">
+<nav style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-bottom:40px;display:flex;gap:8px;align-items:center;letter-spacing:1px">
+<a href="/" style="color:var(--text3)">Home</a>
+<span style="color:var(--gold);opacity:.4">&#9670;</span>
+<a href="/galeria" style="color:var(--text3)">Galerias</a>
+<span style="color:var(--gold);opacity:.4">&#9670;</span>
+<span style="color:var(--text2)">{{ album.titulo }}</span>
+</nav>
+<div style="margin-bottom:52px">
+<div class="deco-heading" style="justify-content:flex-start">
+<span style="font-family:var(--display);font-size:11px;color:var(--gold);letter-spacing:5px">ÁLBUM</span>
+</div>
+<h1 style="font-family:var(--display);font-size:clamp(28px,4vw,44px);color:var(--text);margin:12px 0 8px;font-weight:400;letter-spacing:3px">{{ album.titulo }}</h1>
+<p style="font-family:var(--serif);font-size:15px;color:var(--text2);margin:0;font-style:italic">
+{% if album.descricao %}{{ album.descricao }} &middot; {% endif %}
+{{ views }} visualiza{% if views == 1 %}ção{% else %}ções{% endif %}
+</p>
+</div>
+
+{% if fotos | length > 0 %}
+<div class="masonry" style="columns:3;column-gap:20px">
+{% for foto in fotos %}
+<div class="deco-border foto-item" onclick="abrirLightbox({{ loop.index0 }})">
+<img src="{{ foto.url }}" alt="{{ foto.legenda | default(value='') }}">
+</div>
+{% endfor %}
+</div>
+
+<div class="lightbox" id="lightbox">
+<button class="lightbox-fechar" onclick="fecharLightbox()">&times;</button>
+<button class="lightbox-nav lightbox-prev" onclick="navegarLightbox(-1)">&lsaquo;</button>
+<img id="lightbox-img" src="" alt="">
+<button class="lightbox-nav lightbox-next" onclick="navegarLightbox(1)">&rsaquo;</button>
+</div>
+
+<script>
+var fotos = [{% for foto in fotos %}"{{ foto.url }}"{% if not loop.last %},{% endif %}{% endfor %}];
+var indiceAtual = 0;
+function abrirLightbox(i) {
+indiceAtual = i;
+document.getElementById('lightbox-img').src = fotos[i];
+document.getElementById('lightbox').classList.add('ativo');
+document.body.style.overflow = 'hidden';
+}
+function fecharLightbox() {
+document.getElementById('lightbox').classList.remove('ativo');
+document.body.style.overflow = '';
+}
+function navegarLightbox(dir) {
+indiceAtual = (indiceAtual + dir + fotos.length) % fotos.length;
+document.getElementById('lightbox-img').src = fotos[indiceAtual];
+}
+document.getElementById('lightbox').addEventListener('click', function(e) {
+if (e.target === this) fecharLightbox();
+});
+document.addEventListener('keydown', function(e) {
+if (e.key === 'Escape') fecharLightbox();
+if (e.key === 'ArrowLeft') navegarLightbox(-1);
+if (e.key === 'ArrowRight') navegarLightbox(1);
+});
+</script>
+{% else %}
+<div style="text-align:center;padding:48px 0;color:var(--text3);font-family:var(--serif);font-style:italic">Nenhuma foto neste álbum ainda.</div>
+{% endif %}
+</section>
+{% endblock %}

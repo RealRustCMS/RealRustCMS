@@ -1,0 +1,82 @@
+{% extends "publico/deco/base.html" %}
+
+{% block titulo %}{% if titulo %}{{ titulo }} — {% endif %}Artigos — {{ site_nome }}{% endblock %}
+
+{% block estilos %}
+.article-card{background:var(--card-bg);overflow:hidden}
+.article-thumb{height:200px;background:linear-gradient(135deg,#1a1608,#0d0b04);position:relative;border-bottom:1px solid var(--border)}
+.article-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.article-body{padding:28px 24px}
+.article-date{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:2px}
+.article-titulo{font-family:var(--display);font-size:17px;color:var(--text);margin:0 0 12px;font-weight:400;line-height:1.4;letter-spacing:1px}
+.article-resumo{font-family:var(--serif);font-size:14px;color:var(--text2);margin:0;line-height:1.7}
+.estrela{font-size:11px}
+.estrela.cheia{color:var(--gold)}
+.estrela.meia{color:var(--gold);opacity:.5}
+.estrela.vazia{color:var(--text3)}
+.paginacao{display:flex;align-items:center;justify-content:space-between;margin-top:40px}
+.paginacao-info{font-family:var(--mono);font-size:11px;color:var(--text3);letter-spacing:1px}
+.paginacao-links{display:flex;gap:20px}
+.paginacao-links a{font-family:var(--display);font-size:11px;color:var(--gold);letter-spacing:3px}
+{% endblock %}
+
+{% block conteudo %}
+<section style="max-width:1200px;margin:0 auto;padding:80px 24px">
+<nav style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-bottom:40px;display:flex;gap:8px;align-items:center;letter-spacing:1px">
+<a href="/" style="color:var(--text3)">Home</a>
+<span style="color:var(--gold);opacity:.4">&#9670;</span>
+<span style="color:var(--text2)">{% if titulo %}{{ titulo }}{% else %}Artigos{% endif %}</span>
+</nav>
+<div style="margin-bottom:52px">
+<div class="deco-heading" style="justify-content:flex-start">
+<span style="font-family:var(--display);font-size:11px;color:var(--gold);letter-spacing:5px">BLOG</span>
+</div>
+<h1 style="font-family:var(--display);font-size:clamp(32px,5vw,52px);color:var(--text);margin:12px 0 0;font-weight:400;letter-spacing:4px">{% if titulo %}{{ titulo }}{% else %}Artigos{% endif %}</h1>
+{% if descricao %}<p style="font-family:var(--serif);font-size:15px;color:var(--text2);margin:12px 0 0;font-style:italic">{{ descricao }}</p>{% endif %}
+</div>
+
+{% if artigos | length > 0 %}
+<div class="grid-3" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:28px">
+{% for artigo in artigos %}
+<a href="/artigos/{{ artigo.slug }}" class="deco-border article-card">
+{% if artigo.imagem_capa %}
+<div class="article-thumb"><img src="{{ artigo.imagem_capa }}" alt="{{ artigo.titulo }}"></div>
+{% else %}
+<div class="article-thumb"></div>
+{% endif %}
+<div class="article-body">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:14px">
+<span class="article-date">{{ artigo.publicado_em | date(format="%d %b %Y") | upper }}</span>
+{% if artigo.avaliacao %}
+<span>
+{% for estado in artigo.avaliacao.estrelas %}
+{% if estado == 2 %}<span class="estrela cheia">&#9733;</span>
+{% elif estado == 1 %}<span class="estrela meia">&#9733;</span>
+{% else %}<span class="estrela vazia">&#9734;</span>
+{% endif %}
+{% endfor %}
+</span>
+{% endif %}
+</div>
+<h3 class="article-titulo">{{ artigo.titulo }}</h3>
+{% if artigo.resumo %}<p class="article-resumo">{{ artigo.resumo }}</p>{% endif %}
+<div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:14px;letter-spacing:1px">{{ artigo.tempo_leitura }} MIN DE LEITURA</div>
+</div>
+</a>
+{% endfor %}
+</div>
+
+{% if paginacao.total_paginas > 1 %}
+<div class="paginacao">
+<span class="paginacao-info">PÁGINA {{ paginacao.pagina_atual }} DE {{ paginacao.total_paginas }}</span>
+<div class="paginacao-links">
+{% if paginacao.tem_anterior %}<a href="?pagina={{ paginacao.pagina_anterior }}">&larr; ANTERIOR</a>{% endif %}
+{% if paginacao.tem_proxima %}<a href="?pagina={{ paginacao.proxima_pagina }}">PRÓXIMA &rarr;</a>{% endif %}
+</div>
+</div>
+{% endif %}
+{% else %}
+<div style="text-align:center;padding:64px 0;color:var(--text3);font-family:var(--serif);font-style:italic">Nenhum artigo publicado ainda.</div>
+{% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,33 @@
+/* ─── TEMA: DOURADO ──────────────────────────────────────── */
+:root {
+  --bg-page:         #fdf8ec;
+  --bg-surface:      #ffffff;
+  --bg-elevated:     #fef3cd;
+  --sidebar-bg:      #1c1708;
+  --sidebar-border:  rgba(255,255,255,0.07);
+  --accent:          #C9A227;
+  --accent-hover:    #a88420;
+  --accent-muted:    #FEF3CD;
+  --accent-shadow:   rgba(201,162,39,0.30);
+  --accent-text:     #ffffff;
+  --text-primary:    #1c1708;
+  --text-secondary:  #4a3b0f;
+  --text-muted:      #8a7035;
+  --border:          #F0D98A;
+  --border-subtle:   #FAF0C8;
+  --border-strong:   #DBB42C;
+  --nav-hover:       rgba(240,217,138,0.15);
+  --nav-active-bg:   rgba(201,162,39,0.20);
+  --nav-active-text: #FAD643;
+  --user-av-bg:      rgba(201,162,39,0.40);
+  --row-hover:       #fffdf0;
+  --btn-secondary-hover: #fef3cd;
+  --badge-pub-bg:    #e6f4e7;
+  --badge-pub-text:  #2a7d32;
+  --badge-pub-bdr:   #c2dfc4;
+  --badge-draft-bg:  #fff8e1;
+  --badge-draft-txt: #e65100;
+  --danger:          #c0392b;
+  --danger-bg:       #fdf2f1;
+  --danger-bdr:      #f0c4c0;
+}

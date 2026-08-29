@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block titulo %}Categorias e Tags{% endblock %}
+
+{% block estilos %}
+<style>
+  .tax-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .tax-form { display: flex; gap: 8px; padding: 14px 18px; border-bottom: 1px solid var(--border); }
+  .tax-form input { flex: 1; padding: 8px 12px; border: 1px solid var(--border); border-radius: 7px; font-size: 13.5px; font-family: 'DM Sans', sans-serif; outline: none; }
+  .tax-form input:focus { border-color: var(--accent); }
+  .tax-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 18px; border-bottom: 1px solid var(--border-subtle); font-size: 13px; }
+  .tax-item:last-child { border-bottom: none; }
+  .tax-nome { font-weight: 500; color: var(--text-primary); }
+  .tax-slug { font-size: 11px; color: var(--text-muted); font-family: 'DM Mono', monospace; margin-top: 2px; }
+  .vazio { padding: 24px 18px; color: var(--text-muted); font-size: 13px; }
+</style>
+{% endblock %}
+
+{% block conteudo %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Categorias e Tags</h1>
+    <p class="page-sub">Organize o conteúdo do site</p>
+  </div>
+</div>
+
+<div class="tax-grid">
+
+  <!-- CATEGORIAS -->
+  <div class="card">
+    <div class="card-head">
+      <span class="card-title">Categorias</span>
+    </div>
+    <form method="post" action="/admin/categorias" class="tax-form">
+      <input type="text" name="nome" placeholder="Nova categoria..." required>
+      <button type="submit" class="btn btn-primary btn-sm">Adicionar</button>
+    </form>
+    {% if categorias | length == 0 %}
+    <div class="vazio">Nenhuma categoria ainda.</div>
+    {% else %}
+    {% for cat in categorias %}
+    <div class="tax-item">
+      <div>
+        <div class="tax-nome">{{ cat.nome }}</div>
+        <div class="tax-slug">/categoria/{{ cat.slug }}</div>
+      </div>
+      <form method="post" action="/admin/categorias/{{ cat.id }}/deletar" onsubmit="return confirm('Deletar categoria?')">
+        <button type="submit" class="btn btn-danger btn-sm">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3,6 5,6 21,6"/><path d="M19,6l-1,14a2,2,0,0,1-2,2H8a2,2,0,0,1-2-2L5,6"/></svg>
+        </button>
+      </form>
+    </div>
+    {% endfor %}
+    {% endif %}
+  </div>
+
+  <!-- TAGS -->
+  <div class="card">
+    <div class="card-head">
+      <span class="card-title">Tags</span>
+    </div>
+    <form method="post" action="/admin/tags" class="tax-form">
+      <input type="text" name="nome" placeholder="Nova tag..." required>
+      <button type="submit" class="btn btn-primary btn-sm">Adicionar</button>
+    </form>
+    {% if tags | length == 0 %}
+    <div class="vazio">Nenhuma tag ainda.</div>
+    {% else %}
+    {% for tag in tags %}
+    <div class="tax-item">
+      <div>
+        <div class="tax-nome">{{ tag.nome }}</div>
+        <div class="tax-slug">/tag/{{ tag.slug }}</div>
+      </div>
+      <form method="post" action="/admin/tags/{{ tag.id }}/deletar" onsubmit="return confirm('Deletar tag?')">
+        <button type="submit" class="btn btn-danger btn-sm">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3,6 5,6 21,6"/><path d="M19,6l-1,14a2,2,0,0,1-2,2H8a2,2,0,0,1-2-2L5,6"/></svg>
+        </button>
+      </form>
+    </div>
+    {% endfor %}
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

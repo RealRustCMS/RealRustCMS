@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+
+{% block titulo %}{{ form_titulo }}{% endblock %}
+
+{% block estilos %}
+<!-- Quill fixo em 2.0.2: a 2.0.3 tem regressão no getSemanticHTML que troca
+     todo espaço por &nbsp; (slab/quill#4509). Não usar @2 nem @2.0.3. -->
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
+<style>
+  .form-card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .form-body { padding: 22px; display: flex; flex-direction: column; gap: 18px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+  .form-group input, .form-group select { padding: 9px 12px; border: 1px solid var(--border); border-radius: 7px; font-size: 13.5px; font-family: 'DM Sans', sans-serif; color: var(--text-primary); background: var(--bg-surface); outline: none; transition: border-color .15s; }
+  .form-group input:focus, .form-group select:focus { border-color: var(--accent); }
+  .ql-toolbar { border-radius: 7px 7px 0 0 !important; border-color: var(--border) !important; background: var(--bg-elevated); }
+  .ql-container { border-radius: 0 0 7px 7px !important; border-color: var(--border) !important; font-family: 'DM Sans', sans-serif !important; font-size: 14px !important; min-height: 360px; }
+  .ql-editor { min-height: 360px; line-height: 1.7; }
+  .form-footer { padding: 14px 22px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: flex-end; gap: 8px; background: var(--bg-elevated); }
+  .erro { color: var(--danger); font-size: 12.5px; padding: 10px 14px; background: var(--danger-bg); border: 1px solid var(--danger-bdr); border-radius: 7px; }
+</style>
+{% endblock %}
+
+{% block topbar_acoes %}
+{% if artigo_id and (usuario_papel == "admin" or (usuario_papel == "editor" and autor_id == usuario_id)) %}
+<form method="post" action="/admin/artigos/{{ artigo_id }}/deletar" onsubmit="return confirm('Deletar este artigo?')">
+  <button type="submit" class="btn btn-danger">Deletar artigo</button>
+</form>
+{% endif %}
+{% endblock %}
+
+{% block conteudo %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{{ form_titulo }}</h1>
+    <p class="page-sub"><a href="/admin/artigos" style="color:var(--accent)">← Voltar para artigos</a></p>
+  </div>
+</div>
+
+<div class="form-card">
+  <form id="artigo-form" method="post" action="{{ form_action }}">
+    <div class="form-body">
+      {% if erro %}
+      <p class="erro">{{ erro }}</p>
+      {% endif %}
+
+      <div class="form-group">
+        <label>Título</label>
+        <input type="text" name="titulo" value="{{ titulo | default(value='') }}" required autofocus placeholder="Título do artigo">
+      </div>
+
+      <div class="form-group">
+        <label>Resumo <span style="font-weight:400; color:var(--text-muted)">(opcional — exibido nas listagens)</span></label>
+        <textarea name="resumo" rows="2" placeholder="Uma frase que resume o artigo..." style="padding:9px 12px; border:1px solid var(--border); border-radius:7px; font-size:13.5px; font-family:'DM Sans',sans-serif; color:var(--text-primary); background:var(--bg-surface); outline:none; resize:vertical; transition:border-color .15s;">{{ resumo | default(value='') }}</textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Título SEO <span style="font-weight:400; color:var(--text-muted)">(opcional — sobrescreve o título nas buscas e redes sociais)</span></label>
+        <input type="text" name="titulo_seo" value="{{ titulo_seo | default(value='') }}" placeholder="Deixe vazio para usar o título da página">
+      </div>
+
+      <div class="form-group">
+        <label>Imagem de capa <span style="font-weight:400; color:var(--text-muted)">(opcional — exibida no topo do artigo e nas listagens)</span></label>
+        <input type="hidden" name="imagem_capa" id="imagem-capa-input" value="{{ imagem_capa | default(value='') }}">
+        <div style="display:flex; align-items:flex-start; gap:12px;">
+          <button type="button" id="btn-upload-capa" class="btn btn-secondary btn-sm" style="flex-shrink:0; margin-top:2px;">
+            Escolher imagem
+          </button>
+          <span id="capa-nome" style="font-size:12.5px; color:var(--text-muted); align-self:center;">
+            {% if imagem_capa %}{{ imagem_capa }}{% else %}Nenhuma imagem selecionada{% endif %}
+          </span>
+        </div>
+        {% if imagem_capa %}
+        <div id="capa-preview" style="margin-top:10px;">
+          <img src="{{ imagem_capa }}" alt="Capa" style="max-height:160px; border-radius:7px; border:1px solid var(--border);">
+          <button type="button" id="btn-remover-capa" class="btn btn-danger btn-sm" style="margin-top:6px; display:block;">Remover capa</button>
+        </div>
+        {% else %}
+        <div id="capa-preview" style="margin-top:10px; display:none;">
+          <img id="capa-preview-img" src="" alt="Capa" style="max-height:160px; border-radius:7px; border:1px solid var(--border);">
+          <button type="button" id="btn-remover-capa" class="btn btn-danger btn-sm" style="margin-top:6px; display:block;">Remover capa</button>
+        </div>
+        {% endif %}
+        <div id="capa-erro" class="erro" style="display:none; margin-top:6px;"></div>
+      </div>
+
+      <div class="form-group">
+        <label>Conteúdo</label>
+        <div id="quill-editor">{{ corpo | default(value='') | safe }}</div>
+        <textarea name="corpo" id="corpo" style="display:none">{{ corpo | default(value='') | safe }}</textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Categoria</label>
+        <select name="categoria_id">
+          <option value="">Sem categoria</option>
+          {% for cat in categorias %}
+          <option value="{{ cat.id }}" {% if categoria_id and categoria_id == cat.id %}selected="selected"{% endif %}>{{ cat.nome }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Tags</label>
+        <div style="display:flex; flex-wrap:wrap; gap:8px; padding:10px 12px; border:1px solid var(--border); border-radius:7px; background:var(--bg-surface);">
+          {% for tag in tags_disponiveis %}
+          <label style="display:flex; align-items:center; gap:5px; font-size:13px; font-weight:400; cursor:pointer;">
+            <input type="checkbox" name="tags_check" value="{{ tag.id }}" {% if tag.id in tags_selecionadas %}checked{% endif %}>
+            {{ tag.nome }}
+          </label>
+          {% endfor %}
+          {% if tags_disponiveis | length == 0 %}
+          <span style="font-size:12.5px; color:var(--text-muted)">Nenhuma tag cadastrada. <a href="/admin/taxonomias" style="color:var(--accent)">Criar tags</a></span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Comentários</label>
+        <div style="display:flex; flex-direction:column; gap:10px; padding:10px 12px; border:1px solid var(--border); border-radius:7px;">
+          <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:400; cursor:pointer;">
+            <input type="checkbox" name="comentarios_habilitados" value="1" {% if comentarios_habilitados %}checked{% endif %}>
+            Habilitar comentários neste artigo
+          </label>
+          <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:400; cursor:pointer;">
+            <input type="checkbox" name="moderacao_habilitada" value="1" {% if moderacao_habilitada %}checked{% endif %}>
+            Exigir moderação antes de publicar
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Avaliações</label>
+        <div style="display:flex; flex-direction:column; gap:10px; padding:10px 12px; border:1px solid var(--border); border-radius:7px;">
+          <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:400; cursor:pointer;">
+            <input type="checkbox" name="avaliacoes_habilitadas" value="1" {% if avaliacoes_habilitadas %}checked{% endif %}>
+            Habilitar avaliação por estrelas neste artigo
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Notificações</label>
+        <div style="display:flex; flex-direction:column; gap:10px; padding:10px 12px; border:1px solid var(--border); border-radius:7px;">
+          <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:400; cursor:pointer;">
+            <input type="checkbox" name="notificar_comentarios" value="1" {% if notificar_comentarios %}checked{% endif %}>
+            Notificar por e-mail quando houver comentários aguardando aprovação
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Visibilidade</label>
+        <div style="display:flex; flex-direction:column; gap:10px; padding:10px 12px; border:1px solid var(--border); border-radius:7px;">
+          <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:400; cursor:pointer;">
+            <input type="checkbox" name="restrito" value="1" {% if restrito %}checked{% endif %}>
+            Conteúdo restrito a membros — exige login na área de membros
+          </label>
+          <p style="font-size:12px; color:var(--text-muted); margin:0; padding-left:22px;">
+            Visitantes sem login são redirecionados para a tela de login ao tentar acessar. A exibição (com cadeado) nas listagens públicas é controlada em <a href="/admin/configuracoes" style="color:var(--accent)">Configurações</a>.
+          </p>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Status</label>
+        <select name="status">
+          <option value="rascunho" {% if status == "rascunho" %}selected="selected"{% endif %}>Rascunho</option>
+          <option value="publicado" {% if status == "publicado" %}selected="selected"{% endif %}>Publicado</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-footer">
+      <a href="/admin/artigos" class="btn btn-secondary">Cancelar</a>
+      {% if not artigo_id or usuario_papel == "admin" or (usuario_papel == "editor" and autor_id == usuario_id) %}
+      <button type="submit" class="btn btn-primary">{{ form_botao }}</button>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+<script>
+function imageUploadHandler() {
+  var input = document.createElement('input');
+  input.setAttribute('type', 'file');
+  input.setAttribute('accept', 'image/png,image/jpeg,image/gif,image/webp');
+  input.click();
+
+  input.onchange = async function() {
+    var file = input.files[0];
+    if (!file) return;
+
+    var formData = new FormData();
+    formData.append('imagem', file);
+    formData.append('_csrf', '{{ csrf_token }}');
+
+    var resp  = await fetch('/admin/upload/imagem', { method: 'POST', body: formData });
+    var dados = await resp.json();
+
+    if (dados.url) {
+      var range = quill.getSelection(true);
+      quill.insertEmbed(range.index, 'image', dados.url);
+      quill.setSelection(range.index + 1);
+    } else {
+      var erroDiv = document.getElementById('upload-erro');
+      if (!erroDiv) {
+        erroDiv = document.createElement('div');
+        erroDiv.id        = 'upload-erro';
+        erroDiv.className = 'erro';
+        erroDiv.style.marginTop = '8px';
+        document.getElementById('quill-editor').parentNode.appendChild(erroDiv);
+      }
+      erroDiv.textContent = dados.erro || 'Erro desconhecido no upload.';
+      setTimeout(function() { erroDiv.textContent = ''; }, 4000);
+    }
+  };
+}
+
+  var quill = new Quill('#quill-editor', {
+    theme: 'snow',
+    modules: {
+      toolbar: {
+        container: [
+          [{ header: [1, 2, 3, false] }],
+          ['bold', 'italic', 'underline', 'strike'],
+          [{ list: 'ordered' }, { list: 'bullet' }],
+          ['blockquote', 'code-block'],
+          ['link', 'image'],
+          ['clean']
+        ],
+        handlers: { image: imageUploadHandler }
+      }
+    }
+  });
+
+  document.getElementById('artigo-form').addEventListener('submit', function() {
+    document.getElementById('corpo').value = quill.getSemanticHTML();
+
+    var checks = document.querySelectorAll('input[name="tags_check"]:checked');
+    var ids    = Array.from(checks).map(function(c) { return c.value; }).join(',');
+    var input  = document.createElement('input');
+    input.type  = 'hidden';
+    input.name  = 'tags';
+    input.value = ids;
+    this.appendChild(input);
+  });
+
+  // ── Upload de imagem de capa ──────────────────────────────
+  // Mesmo padrão do imageUploadHandler do Quill: sem arrow functions,
+  // sem template literals, IIFE para isolar escopo.
+  (function() {
+    var btnUpload  = document.getElementById('btn-upload-capa');
+    var btnRemover = document.getElementById('btn-remover-capa');
+    var inputCapa  = document.getElementById('imagem-capa-input');
+    var preview    = document.getElementById('capa-preview');
+    var previewImg = document.getElementById('capa-preview-img');
+    var nomeSpan   = document.getElementById('capa-nome');
+    var erroDiv    = document.getElementById('capa-erro');
+
+    if (!btnUpload) { return; }
+
+    btnUpload.addEventListener('click', function() {
+      var fileInput = document.createElement('input');
+      fileInput.setAttribute('type', 'file');
+      fileInput.setAttribute('accept', 'image/png,image/jpeg,image/gif,image/webp');
+      fileInput.click();
+
+      fileInput.onchange = function() {
+        var file = fileInput.files[0];
+        if (!file) { return; }
+
+        var formData = new FormData();
+        formData.append('imagem', file);
+        formData.append('_csrf', '{{ csrf_token }}');
+
+        fetch('/admin/upload/imagem', { method: 'POST', body: formData })
+          .then(function(resp) { return resp.json(); })
+          .then(function(dados) {
+            if (dados.url) {
+              inputCapa.value = dados.url;
+              nomeSpan.textContent = dados.url;
+              erroDiv.style.display = 'none';
+              // Se o preview já tem a img dentro (artigo com capa existente),
+              // usa ela; se não, usa o previewImg do bloco vazio.
+              var img = preview.querySelector('img');
+              if (img) { img.src = dados.url; }
+              preview.style.display = 'block';
+            } else {
+              erroDiv.textContent = dados.erro || 'Erro desconhecido no upload.';
+              erroDiv.style.display = 'block';
+              setTimeout(function() { erroDiv.style.display = 'none'; }, 4000);
+            }
+          })
+          .catch(function() {
+            erroDiv.textContent = 'Erro de conexão no upload.';
+            erroDiv.style.display = 'block';
+            setTimeout(function() { erroDiv.style.display = 'none'; }, 4000);
+          });
+      };
+    });
+
+    if (btnRemover) {
+      btnRemover.addEventListener('click', function() {
+        inputCapa.value = '';
+        nomeSpan.textContent = 'Nenhuma imagem selecionada';
+        preview.style.display = 'none';
+        var img = preview.querySelector('img');
+        if (img) { img.src = ''; }
+      });
+    }
+  })();
+</script>
+{% endblock %}

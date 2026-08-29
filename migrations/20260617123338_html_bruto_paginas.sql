@@ -1,0 +1,1 @@
+ALTER TABLE paginas ADD COLUMN html_bruto TEXT NULL;
