@@ -16,12 +16,15 @@ use tower_http::limit::RequestBodyLimitLayer;
 use tower_http::services::ServeDir;
 use tower_http::set_header::SetResponseHeaderLayer;
 use tower_sessions::cookie::time::Duration;
+use tower_sessions::session_store::ExpiredDeletion;
 use tower_sessions::{cookie::Key, cookie::SameSite, Expiry, SessionManagerLayer};
 use tower_sessions_sqlx_store_chrono::PostgresStore;
 
 pub async fn montar(state: AppState) -> Router {
-    // PostgresStore não usa with_schema_name — a tabela é criada no schema
-    // padrão (public) do banco. with_table_name continua funcionando igual.
+    // A tabela fica em `tower_sessions.sessoes` — o schema `tower_sessions` é
+    // o default do PostgresStore (não passamos with_schema_name); só o nome da
+    // tabela é sobrescrito (o default do crate seria `session`). Schema
+    // separado de `public` é intencional — backup seletivo e limpeza independente.
     let session_store = PostgresStore::new(state.db.clone())
         .with_table_name("sessoes")
         .unwrap();
@@ -30,6 +33,27 @@ pub async fn montar(state: AppState) -> Router {
         .migrate()
         .await
         .expect("Falha ao inicializar store de sessões");
+
+    // Limpeza periódica de sessões expiradas. O PostgresStore não expira
+    // sozinho — sem isto, cada linha de sessão que passa das 2h de inatividade
+    // fica para sempre em `tower_sessions.sessoes` acumulando peso morto.
+    // `delete_expired` roda `DELETE ... WHERE expiry_date < now()`. Loop
+    // próprio (em vez do `continuously_delete_expired` do crate, que exige a
+    // feature `deletion-task` e encerra de vez no primeiro erro) — o primeiro
+    // tick do interval dispara imediato, então o backlog é limpo já no boot.
+    {
+        let store = session_store.clone();
+        tokio::spawn(async move {
+            let mut intervalo =
+                tokio::time::interval(std::time::Duration::from_secs(3600));
+            loop {
+                intervalo.tick().await;
+                if let Err(e) = store.delete_expired().await {
+                    tracing::warn!(erro = %e, "Falha ao limpar sessões expiradas");
+                }
+            }
+        });
+    }
 
     let secret = state.config.session_secret.as_bytes().to_vec();
     let key = Key::from(&secret);
