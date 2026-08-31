@@ -8,8 +8,13 @@ use tokio::sync::RwLock;
 #[derive(Clone)]
 pub struct AppState {
     pub db: PgPool,
-    pub config: Config,
-    pub tera: Tera,
+    // Config e Tera atrás de Arc: o extractor `State<AppState>` clona o
+    // AppState inteiro a cada request. Sem o Arc, isso significava deep-clone
+    // dos ~50 templates Tera e de todas as Strings do Config por request.
+    // Com Arc, o clone é só um bump de refcount. Acesso continua transparente
+    // via Deref (`state.config.x`, `state.tera.render(...)`).
+    pub config: Arc<Config>,
+    pub tera: Arc<Tera>,
     // Cache da árvore do menu principal.
     // Substituiu o Vec<PaginaMenu> — agora suporta submenus ilimitados.
     // Invalidado toda vez que o menu é salvo no admin.

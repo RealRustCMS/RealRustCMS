@@ -41,6 +41,10 @@ pub struct OidcGenericoConfig {
 #[derive(Clone)]
 pub struct Config {
     pub database_url: String,
+    // Teto de conexões do pool SQLx. Env DB_MAX_CONEXOES, padrão 20.
+    // Não passar de ~25-30 por instância sem PgBouncer — mais conexão que
+    // core do Postgres não acelera, só consome RAM no servidor.
+    pub db_max_conexoes: u32,
     pub site_nome: String,
     pub site_descricao: String,
     pub porta: u16,
@@ -153,6 +157,12 @@ impl Config {
             .unwrap_or("3000".into())
             .parse()
             .expect("Porta inválida");
+
+        // Teto do pool SQLx. Valor inválido ou ausente cai no padrão 20.
+        let db_max_conexoes: u32 = std::env::var("DB_MAX_CONEXOES")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(20);
 
         // ─── Helper interno ───────────────────────────────
         // Lê uma variável de ambiente e retorna None se vazia ou ausente.
@@ -356,6 +366,7 @@ impl Config {
 
         Self {
             database_url: std::env::var("DATABASE_URL").expect("DATABASE_URL não definida"),
+            db_max_conexoes,
             site_nome: std::env::var("SITE_NOME").expect("SITE_NOME não definido"),
             site_descricao: std::env::var("SITE_DESCRICAO").expect("SITE_DESCRICAO não definida"),
             site_logo: env_opt("SITE_LOGO"),

@@ -82,6 +82,10 @@ Crie um arquivo `.env` na raiz do projeto com base no `.env.exemplo`.
 # postgres://usuario:senha@localhost:5432/rustcms?options=-csearch_path%3Dmeu_site
 DATABASE_URL=postgres://usuario:senha@localhost:5432/rustcms
 
+# Teto de conexões do pool (opcional, padrão 20)
+# O default interno do SQLx é 10; suba para ~20-30 sob carga real
+DB_MAX_CONEXOES=20
+
 # Identidade do site (obrigatório)
 SITE_NOME=Meu Site
 SITE_DESCRICAO=Descrição do meu site

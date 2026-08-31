@@ -32,7 +32,7 @@ async fn main() {
         .init();
 
     let config = config::Config::carregar();
-    let db = db::conectar(&config.database_url).await;
+    let db = db::conectar(&config.database_url, config.db_max_conexoes).await;
 
     // Roda as migrations automaticamente na inicialização.
     // O SQLx controla quais já foram aplicadas via tabela _sqlx_migrations,
@@ -47,8 +47,8 @@ async fn main() {
     let porta = config.porta;
     let state = AppState {
         db,
-        config,
-        tera,
+        config: Arc::new(config),
+        tera: Arc::new(tera),
         menu_cache: Arc::new(RwLock::new(Vec::new())),
     };
 
