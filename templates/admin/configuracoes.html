@@ -70,6 +70,32 @@
     </div>
   </div>
 
+  <div class="card" style="margin-bottom: 16px;">
+    <div class="card-head">
+      <span class="card-title">Cache de páginas públicas</span>
+    </div>
+    <div style="padding: 22px; display: flex; flex-direction: column; gap: 18px;">
+
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">
+          TTL do cache <span style="font-weight: 400; color: var(--text-muted)">(segundos — 0 desliga)</span>
+        </label>
+        <input
+          type="number"
+          name="cache_ttl_segundos"
+          value="{{ cache_ttl_segundos }}"
+          min="0"
+          max="86400"
+          style="padding: 9px 12px; border: 1px solid var(--border); border-radius: 7px; font-size: 13.5px; font-family: 'DM Sans', sans-serif; color: var(--text-primary); background: var(--bg-surface); outline: none; transition: border-color .15s; max-width: 160px;"
+        >
+        <p style="font-size: 12px; color: var(--text-muted); margin: 0;">
+          Com um valor maior que 0, as páginas de listagem (home, lista de artigos, categorias, tags, galeria, eventos) vistas por visitantes <strong>não logados</strong> são servidas de um cache em memória por esse tempo, poupando consultas ao banco e renderização sob tráfego alto. Qualquer alteração de conteúdo no painel limpa o cache na hora, então o atraso só vale para mudanças feitas fora do painel. Páginas de artigo/álbum individuais, busca e qualquer visita logada nunca são cacheadas. Sugestão: 30–120 para sites movimentados; deixe 0 se o conteúdo muda o tempo todo.
+        </p>
+      </div>
+
+    </div>
+  </div>
+
   <div style="display: flex; justify-content: flex-end;">
     <button type="submit" class="btn btn-primary">
       Salvar configurações

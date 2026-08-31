@@ -52,6 +52,17 @@ impl<'a> ConfiguracoesRepo<'a> {
         })
     }
 
+    /// TTL do cache de páginas públicas, em segundos.
+    /// 0 (padrão) = cache desligado — preserva o comportamento de instalações
+    /// que nunca tocaram nessa configuração.
+    pub async fn get_cache_ttl(&self) -> Result<u64> {
+        Ok(self
+            .get("cache_ttl_segundos")
+            .await?
+            .and_then(|v| v.trim().parse().ok())
+            .unwrap_or(0))
+    }
+
     /// Lê a configuração de visibilidade de artigos restritos nas listagens
     /// públicas. Usa Default (true — mostra com badge) se a chave não existir,
     /// o que preserva o comportamento atual em instalações já existentes.

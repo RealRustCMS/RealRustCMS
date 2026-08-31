@@ -1,6 +1,6 @@
 use crate::{
     csrf::gerar_token,
-    error::Result,
+    error::{AppError, Result},
     models::{
         calcular_tempo_leitura, ArtigoListagem, MenuItemArvore, NovaAvaliacao, NovoComentario,
         Paginacao, QueryAvaliado, QueryPagina,
@@ -31,9 +31,41 @@ use axum::{
 };
 use serde::Deserialize;
 use std::collections::HashMap;
+use std::future::Future;
 use std::net::SocketAddr;
+use std::sync::Arc;
 use tera::Context;
 use tower_sessions::Session;
+
+/// Serve o HTML de uma listagem pública a partir do cache quando:
+///  - o admin habilitou o cache (`cache_ttl` > 0), e
+///  - o visitante é anônimo (`sessao_membro_ativa` == false) — logado vê menu
+///    filtrado e artigos restritos, o conteúdo varia por sessão.
+/// `try_get_with` faz coalescing: sob stampede, `render` roda uma vez só por
+/// chave. `render` só é criado/avaliado no miss; no hit é descartado sem custo.
+async fn pagina_cacheada<F>(
+    state: &AppState,
+    session: &Session,
+    chave: String,
+    render: F,
+) -> Result<Html<String>>
+where
+    F: Future<Output = Result<String>> + Send,
+{
+    if state.cache_ttl_segundos() == 0 || MembrosService::sessao_membro_ativa(session).await {
+        return Ok(Html(render.await?));
+    }
+
+    let html = state
+        .pagina_cache
+        .try_get_with(chave, async move { render.await.map(Arc::<str>::from) })
+        .await
+        .map_err(|e: Arc<AppError>| {
+            AppError::Interno(format!("falha ao renderizar página cacheada: {e}"))
+        })?;
+
+    Ok(Html(html.to_string()))
+}
 
 // Injeta as variáveis globais do site em todos os templates públicos.
 // menu vem do cache em memória — árvore com submenus ilimitados, sem query por request.
@@ -107,8 +139,18 @@ fn artigos_com_avaliacao(
 }
 
 pub async fn home(State(state): State<AppState>, session: Session) -> Result<Html<String>> {
+    pagina_cacheada(
+        &state,
+        &session,
+        "pub:home".to_string(),
+        home_render(&state, &session),
+    )
+    .await
+}
+
+async fn home_render(state: &AppState, session: &Session) -> Result<String> {
     let artigos_repo = ArtigosRepo::novo(&state.db);
-    let ocultar_restritos = deve_ocultar_restritos(&state, &session).await;
+    let ocultar_restritos = deve_ocultar_restritos(state, session).await;
 
     // Artigos em destaque — separados em hero (primeiro) e secundários (resto)
     let mut destaques = artigos_repo
@@ -143,17 +185,15 @@ pub async fn home(State(state): State<AppState>, session: Session) -> Result<Htm
         .await
         .unwrap_or_default();
 
-    let mut ctx = ctx_base(&state, &session).await;
+    let mut ctx = ctx_base(state, session).await;
     ctx.insert("destaque_hero", &destaque_hero);
     ctx.insert("destaques_secundarios", &destaques_secundarios);
     ctx.insert("artigos", &artigos);
     ctx.insert("proximos_eventos", &proximos_eventos);
 
-    Ok(Html(
-        state
-            .tera
-            .render(&state.config.template_pub("home.html"), &ctx)?,
-    ))
+    Ok(state
+        .tera
+        .render(&state.config.template_pub("home.html"), &ctx)?)
 }
 
 pub async fn listar_artigos(
@@ -162,8 +202,22 @@ pub async fn listar_artigos(
     Query(query): Query<QueryPagina>,
 ) -> Result<Html<String>> {
     let pagina = query.pagina.unwrap_or(1).max(1);
+    pagina_cacheada(
+        &state,
+        &session,
+        format!("pub:artigos:{pagina}"),
+        listar_artigos_render(&state, &session, pagina),
+    )
+    .await
+}
+
+async fn listar_artigos_render(
+    state: &AppState,
+    session: &Session,
+    pagina: i64,
+) -> Result<String> {
     let por_pagina = state.config.artigos_por_pagina;
-    let ocultar_restritos = deve_ocultar_restritos(&state, &session).await;
+    let ocultar_restritos = deve_ocultar_restritos(state, session).await;
 
     let (artigos, total) = ArtigosRepo::novo(&state.db)
         .listar_publicados_paginado(pagina, por_pagina, ocultar_restritos)
@@ -179,14 +233,13 @@ pub async fn listar_artigos(
     let artigos = artigos_com_avaliacao(artigos, stats);
     let paginacao = Paginacao::calcular(pagina, total, por_pagina);
 
-    let mut ctx = ctx_base(&state, &session).await;
+    let mut ctx = ctx_base(state, session).await;
     ctx.insert("artigos", &artigos);
     ctx.insert("paginacao", &paginacao);
 
-    Ok(Html(state.tera.render(
-        &state.config.template_pub("artigos.html"),
-        &ctx,
-    )?))
+    Ok(state
+        .tera
+        .render(&state.config.template_pub("artigos.html"), &ctx)?)
 }
 
 pub async fn ver_artigo(
@@ -330,6 +383,20 @@ pub async fn listar_eventos(
     Query(query): Query<QueryPagina>,
 ) -> Result<Html<String>> {
     let pagina = query.pagina.unwrap_or(1).max(1);
+    pagina_cacheada(
+        &state,
+        &session,
+        format!("pub:eventos:{pagina}"),
+        listar_eventos_render(&state, &session, pagina),
+    )
+    .await
+}
+
+async fn listar_eventos_render(
+    state: &AppState,
+    session: &Session,
+    pagina: i64,
+) -> Result<String> {
     let por_pagina = state.config.artigos_por_pagina;
 
     let (eventos, total) = EventosRepo::novo(&state.db)
@@ -339,14 +406,13 @@ pub async fn listar_eventos(
 
     let paginacao = Paginacao::calcular(pagina, total, por_pagina);
 
-    let mut ctx = ctx_base(&state, &session).await;
+    let mut ctx = ctx_base(state, session).await;
     ctx.insert("eventos", &eventos);
     ctx.insert("paginacao", &paginacao);
 
-    Ok(Html(state.tera.render(
-        &state.config.template_pub("eventos.html"),
-        &ctx,
-    )?))
+    Ok(state
+        .tera
+        .render(&state.config.template_pub("eventos.html"), &ctx)?)
 }
 
 /// Exibe um evento pelo slug. Só renderiza eventos com publicado = true.
@@ -541,18 +607,27 @@ pub async fn listar_galeria(
     State(state): State<AppState>,
     session: Session,
 ) -> Result<Html<String>> {
+    pagina_cacheada(
+        &state,
+        &session,
+        "pub:galeria".to_string(),
+        listar_galeria_render(&state, &session),
+    )
+    .await
+}
+
+async fn listar_galeria_render(state: &AppState, session: &Session) -> Result<String> {
     let albuns = GaleriaRepo::novo(&state.db)
         .listar_albuns_com_capa()
         .await
         .unwrap_or_default();
 
-    let mut ctx = ctx_base(&state, &session).await;
+    let mut ctx = ctx_base(state, session).await;
     ctx.insert("albuns", &albuns);
 
-    Ok(Html(state.tera.render(
-        &state.config.template_pub("galeria.html"),
-        &ctx,
-    )?))
+    Ok(state
+        .tera
+        .render(&state.config.template_pub("galeria.html"), &ctx)?)
 }
 
 pub async fn ver_album_publico(
@@ -597,33 +672,37 @@ pub async fn artigos_por_categoria(
     let por_pagina = state.config.artigos_por_pagina;
     let ocultar_restritos = deve_ocultar_restritos(&state, &session).await;
 
-    match CategoriasRepo::novo(&state.db)
+    // Existência da categoria é checada sempre (fora do cache) para preservar
+    // o redirect para /artigos em slug inválido; o resto do render é cacheado.
+    let (artigos, total, categoria) = match CategoriasRepo::novo(&state.db)
         .artigos_da_categoria(&slug, pagina, por_pagina, ocultar_restritos)
         .await
     {
-        Ok((artigos, total, categoria)) => {
-            let ids: Vec<String> = artigos.iter().map(|a| a.id.clone()).collect();
-            let stats = AvaliacoesRepo::novo(&state.db)
-                .buscar_stats_multiplos(&ids)
-                .await
-                .unwrap_or_default();
-            let artigos = artigos_com_avaliacao(artigos, stats);
+        Ok(t) => t,
+        Err(_) => return Ok(Redirect::to("/artigos").into_response()),
+    };
 
-            let paginacao = Paginacao::calcular(pagina, total, por_pagina);
-            let mut ctx = ctx_base(&state, &session).await;
-            ctx.insert("artigos", &artigos);
-            ctx.insert("paginacao", &paginacao);
-            ctx.insert("titulo", &format!("Categoria: {}", categoria.nome));
-            ctx.insert("descricao", &format!("{} artigos", total));
-            Ok(Html(
-                state
-                    .tera
-                    .render(&state.config.template_pub("artigos.html"), &ctx)?,
-            )
-            .into_response())
-        }
-        Err(_) => Ok(Redirect::to("/artigos").into_response()),
-    }
+    let chave = format!("pub:categoria:{slug}:{pagina}");
+    let html = pagina_cacheada(&state, &session, chave, async {
+        let ids: Vec<String> = artigos.iter().map(|a| a.id.clone()).collect();
+        let stats = AvaliacoesRepo::novo(&state.db)
+            .buscar_stats_multiplos(&ids)
+            .await
+            .unwrap_or_default();
+        let artigos = artigos_com_avaliacao(artigos, stats);
+
+        let paginacao = Paginacao::calcular(pagina, total, por_pagina);
+        let mut ctx = ctx_base(&state, &session).await;
+        ctx.insert("artigos", &artigos);
+        ctx.insert("paginacao", &paginacao);
+        ctx.insert("titulo", &format!("Categoria: {}", categoria.nome));
+        ctx.insert("descricao", &format!("{} artigos", total));
+        Ok(state
+            .tera
+            .render(&state.config.template_pub("artigos.html"), &ctx)?)
+    })
+    .await?;
+    Ok(html.into_response())
 }
 
 pub async fn artigos_por_tag(
@@ -636,33 +715,35 @@ pub async fn artigos_por_tag(
     let por_pagina = state.config.artigos_por_pagina;
     let ocultar_restritos = deve_ocultar_restritos(&state, &session).await;
 
-    match TagsRepo::novo(&state.db)
+    let (artigos, total, tag) = match TagsRepo::novo(&state.db)
         .artigos_da_tag(&slug, pagina, por_pagina, ocultar_restritos)
         .await
     {
-        Ok((artigos, total, tag)) => {
-            let ids: Vec<String> = artigos.iter().map(|a| a.id.clone()).collect();
-            let stats = AvaliacoesRepo::novo(&state.db)
-                .buscar_stats_multiplos(&ids)
-                .await
-                .unwrap_or_default();
-            let artigos = artigos_com_avaliacao(artigos, stats);
+        Ok(t) => t,
+        Err(_) => return Ok(Redirect::to("/artigos").into_response()),
+    };
 
-            let paginacao = Paginacao::calcular(pagina, total, por_pagina);
-            let mut ctx = ctx_base(&state, &session).await;
-            ctx.insert("artigos", &artigos);
-            ctx.insert("paginacao", &paginacao);
-            ctx.insert("titulo", &format!("Tag: {}", tag.nome));
-            ctx.insert("descricao", &format!("{} artigos", total));
-            Ok(Html(
-                state
-                    .tera
-                    .render(&state.config.template_pub("artigos.html"), &ctx)?,
-            )
-            .into_response())
-        }
-        Err(_) => Ok(Redirect::to("/artigos").into_response()),
-    }
+    let chave = format!("pub:tag:{slug}:{pagina}");
+    let html = pagina_cacheada(&state, &session, chave, async {
+        let ids: Vec<String> = artigos.iter().map(|a| a.id.clone()).collect();
+        let stats = AvaliacoesRepo::novo(&state.db)
+            .buscar_stats_multiplos(&ids)
+            .await
+            .unwrap_or_default();
+        let artigos = artigos_com_avaliacao(artigos, stats);
+
+        let paginacao = Paginacao::calcular(pagina, total, por_pagina);
+        let mut ctx = ctx_base(&state, &session).await;
+        ctx.insert("artigos", &artigos);
+        ctx.insert("paginacao", &paginacao);
+        ctx.insert("titulo", &format!("Tag: {}", tag.nome));
+        ctx.insert("descricao", &format!("{} artigos", total));
+        Ok(state
+            .tera
+            .render(&state.config.template_pub("artigos.html"), &ctx)?)
+    })
+    .await?;
+    Ok(html.into_response())
 }
 
 // ─── RSS FEED ─────────────────────────────────────────────

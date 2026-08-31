@@ -1505,10 +1505,12 @@ pub async fn pagina_configuracoes(
         .get_listagem_restrita()
         .await
         .unwrap_or_default();
+    let cache_ttl = repo_config.get_cache_ttl().await.unwrap_or(0);
 
     let mut ctx = ctx_base(&state, &nome, &papel, &uid, "configuracoes", &csrf);
     ctx.insert("config_notif", &config_notif);
     ctx.insert("config_listagem", &config_listagem);
+    ctx.insert("cache_ttl_segundos", &cache_ttl);
     ctx.insert("smtp_configurado", &state.config.smtp.is_some());
 
     Ok(Html(state.tera.render("admin/configuracoes.html", &ctx)?))
@@ -1523,6 +1525,13 @@ pub async fn salvar_configuracoes(
     let notif_ativa = dados.notif_ativa.is_some();
     let email_fallback = dados.notif_email_fallback.unwrap_or_default();
     let mostrar_restritos = dados.mostrar_artigos_restritos_listagem.is_some();
+    // Vazio ou não-numérico → 0 (cache desligado). Teto de 24h só por sanidade.
+    let cache_ttl: u64 = dados
+        .cache_ttl_segundos
+        .as_deref()
+        .and_then(|v| v.trim().parse().ok())
+        .unwrap_or(0)
+        .min(86_400);
 
     if let Err(e) = repo
         .set("notif_ativa", if notif_ativa { "true" } else { "false" })
@@ -1542,8 +1551,17 @@ pub async fn salvar_configuracoes(
     {
         tracing::error!(erro = %e, "Falha ao salvar mostrar_artigos_restritos_listagem");
     }
+    if let Err(e) = repo
+        .set("cache_ttl_segundos", &cache_ttl.to_string())
+        .await
+    {
+        tracing::error!(erro = %e, "Falha ao salvar cache_ttl_segundos");
+    }
+    // Aplica o TTL novo em runtime. O cache em si é limpo pelo middleware
+    // `invalidar_cache_publico` (este POST conta como mutação).
+    state.definir_cache_ttl(cache_ttl);
 
-    tracing::info!("Configurações gerais salvas");
+    tracing::info!(cache_ttl_segundos = cache_ttl, "Configurações gerais salvas");
 
     Redirect::to("/admin/configuracoes")
 }

@@ -12,8 +12,9 @@ mod sanitize;
 mod services;
 mod state;
 
-use state::AppState;
+use state::{AppState, TtlDinamico};
 use std::net::SocketAddr;
+use std::sync::atomic::AtomicU64;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing_subscriber::EnvFilter;
@@ -44,12 +45,28 @@ async fn main() {
 
     let tera = tera::Tera::new("templates/**/*.html").expect("Falha ao carregar templates Tera");
 
+    // Cache de páginas públicas. O TTL vem da tabela `configuracoes`
+    // (chave `cache_ttl_segundos`, padrão 0 = desligado) e é editável em
+    // runtime pelo admin via o `AtomicU64` compartilhado com o `Expiry`.
+    let cache_ttl = Arc::new(AtomicU64::new(
+        repositories::configuracoes::ConfiguracoesRepo::novo(&db)
+            .get_cache_ttl()
+            .await
+            .unwrap_or(0),
+    ));
+    let pagina_cache = moka::future::Cache::builder()
+        .max_capacity(500)
+        .expire_after(TtlDinamico(cache_ttl.clone()))
+        .build();
+
     let porta = config.porta;
     let state = AppState {
         db,
         config: Arc::new(config),
         tera: Arc::new(tera),
         menu_cache: Arc::new(RwLock::new(Vec::new())),
+        pagina_cache,
+        cache_ttl,
     };
 
     // Popula o cache do menu principal antes de aceitar requests.

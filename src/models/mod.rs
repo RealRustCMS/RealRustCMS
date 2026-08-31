@@ -676,10 +676,13 @@ impl Default for ConfigListagemRestrita {
 }
 
 /// Form combinado da página de configurações — um único POST cobre
-/// notificações por e-mail e visibilidade de conteúdo restrito.
+/// notificações por e-mail, visibilidade de conteúdo restrito e o TTL do
+/// cache de páginas públicas.
 #[derive(Debug, Deserialize)]
 pub struct ConfiguracoesGeraisForm {
     pub notif_ativa: Option<String>,
     pub notif_email_fallback: Option<String>,
     pub mostrar_artigos_restritos_listagem: Option<String>,
+    /// TTL do cache de páginas em segundos; vazio ou não-numérico vira 0 (off).
+    pub cache_ttl_segundos: Option<String>,
 }

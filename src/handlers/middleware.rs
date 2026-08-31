@@ -80,6 +80,30 @@ pub async fn requer_admin(
     }
 }
 
+// Invalida o cache de páginas públicas depois de qualquer mutação no /admin.
+// Em vez de espalhar `pagina_cache.invalidate_all()` pelos ~20 handlers que
+// alteram conteúdo (artigo, página, evento, categoria, tag, menu, galeria,
+// configurações...), um único ponto: toda request não-GET ao /admin que não
+// termina em erro derruba o cache inteiro. Mutações de usuário/perfil/comentário
+// também invalidam — inofensivo, só força um miss na próxima visita pública.
+// `invalidate_all()` é O(1) no moka (marca um timestamp; entradas anteriores
+// passam a ser ignoradas na leitura).
+pub async fn invalidar_cache_publico(
+    State(state): State<AppState>,
+    request: Request,
+    next: Next,
+) -> Response {
+    let e_mutacao = !matches!(
+        request.method(),
+        &Method::GET | &Method::HEAD | &Method::OPTIONS
+    );
+    let res = next.run(request).await;
+    if e_mutacao && !res.status().is_server_error() && !res.status().is_client_error() {
+        state.pagina_cache.invalidate_all();
+    }
+    res
+}
+
 pub async fn verificar_csrf(session: Session, request: Request<Body>, next: Next) -> Response {
     if matches!(
         request.method(),

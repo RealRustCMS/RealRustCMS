@@ -23,7 +23,7 @@ use crate::{
             criar_evento, deletar_evento, form_editar_evento, form_novo_evento, listar_eventos,
             salvar_evento,
         },
-        middleware::{requer_admin, requer_editor, requer_login},
+        middleware::{invalidar_cache_publico, requer_admin, requer_editor, requer_login},
     },
     state::AppState,
 };
@@ -121,5 +121,11 @@ pub fn rotas(state: AppState) -> Router {
         .merge(rotas_admin)
         .merge(rotas_editor)
         .merge(rotas_login)
+        // Qualquer POST/PUT/DELETE bem-sucedido no /admin limpa o cache de
+        // páginas públicas — ver `invalidar_cache_publico`.
+        .layer(middleware::from_fn_with_state(
+            state.clone(),
+            invalidar_cache_publico,
+        ))
         .with_state(state)
 }
