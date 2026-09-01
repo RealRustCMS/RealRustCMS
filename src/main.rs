@@ -43,7 +43,30 @@ async fn main() {
         .await
         .expect("Falha ao rodar migrations");
 
-    let tera = tera::Tera::new("templates/**/*.html").expect("Falha ao carregar templates Tera");
+    let mut tera =
+        tera::Tera::new("templates/**/*.html").expect("Falha ao carregar templates Tera");
+
+    // Função global `asset(path="css/admin.css")` → "/static/css/admin.css?v=<ver>".
+    // O `?v=` é cache-busting: /static é servido com Cache-Control `immutable`
+    // de longa duração em produção (ver routes/mod.rs), então a URL precisa
+    // mudar a cada release para o navegador buscar o CSS novo.
+    {
+        let asset_ver = config.asset_ver.clone();
+        tera.register_function(
+            "asset",
+            move |args: &std::collections::HashMap<String, tera::Value>| {
+                let path = args
+                    .get("path")
+                    .and_then(tera::Value::as_str)
+                    .ok_or_else(|| tera::Error::msg("asset(): argumento `path` obrigatório"))?;
+                Ok(tera::Value::String(format!(
+                    "/static/{}?v={}",
+                    path.trim_start_matches('/'),
+                    asset_ver
+                )))
+            },
+        );
+    }
 
     // Cache de páginas públicas. O TTL vem da tabela `configuracoes`
     // (chave `cache_ttl_segundos`, padrão 0 = desligado) e é editável em

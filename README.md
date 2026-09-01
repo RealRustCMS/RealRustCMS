@@ -100,6 +100,11 @@ PORTA=3000
 # Em produção: https://meusite.com (sem barra no final)
 BASE_URL=http://localhost:3000
 
+# Versão dos assets (opcional) — vira o `?v=` dos CSS em /static.
+# Em produção /static tem Cache-Control imutável de 1 ano; mude a cada release
+# (ou grave o hash do commit no build via ASSET_VER). Padrão: CARGO_PKG_VERSION.
+# ASSET_VER=
+
 # Chave de assinatura das sessões — mínimo 64 caracteres (obrigatório)
 # Gere com: openssl rand -base64 64
 SESSION_SECRET=uma-chave-secreta-longa-e-aleatoria-com-pelo-menos-64-caracteres

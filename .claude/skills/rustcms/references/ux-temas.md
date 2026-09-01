@@ -23,9 +23,16 @@ Ativado via `TEMPLATE_PUBLICO` no `.env` (vazio = `default`, ou `"deco"`). Selec
 Cada tema é um arquivo `static/css/temas/<nome>.css` que define as variáveis `:root`. O `base.html` carrega com:
 
 ```html
-<link rel="stylesheet" href="/static/css/temas/{{ tema }}.css">
-<link rel="stylesheet" href="/static/css/admin.css">
+<link rel="stylesheet" href="{{ asset(path='css/temas/' ~ tema ~ '.css') | safe }}">
+<link rel="stylesheet" href="{{ asset(path='css/admin.css') | safe }}">
 ```
+
+A função Tera `asset(path=...)` (registrada em `main.rs`) prefixa `/static/` e
+anexa `?v=<asset_ver>` para cache-busting — `/static` é servido com
+`Cache-Control: immutable` de 1 ano em produção (`routes/mod.rs`), então a URL
+precisa mudar a cada release. `asset_ver` vem de `ASSET_VER` (env) →
+`option_env!("ASSET_VER")` (gravado pelo CI no build) → `CARGO_PKG_VERSION`.
+Nunca referencie `/static/...` direto num template — sempre via `asset()`.
 
 A ordem importa: o tema vem antes do `admin.css`. O `admin.css` usa as variáveis, nunca as redefine.
 

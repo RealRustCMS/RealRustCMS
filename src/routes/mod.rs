@@ -91,6 +91,25 @@ pub async fn montar(state: AppState) -> Router {
     let csp = state.config.csp.clone();
     let limite_bytes = state.config.upload_tamanho_maximo_mb * 1024 * 1024;
 
+    // ─── Assets estáticos com política de cache ───────────────────────────
+    // Em produção: os CSS carregam com `?v=<asset_ver>` (função `asset()` no
+    // Tera), então a URL muda a cada release e podemos mandar cache agressivo
+    // e imutável — o navegador nunca revalida enquanto a URL não mudar. Os
+    // uploads (nomes UUID) são imutáveis por URL na prática, entra no mesmo
+    // balde. Em desenvolvimento: `no-cache` para o navegador sempre revalidar
+    // (senão um CSS editado ficaria preso por um ano até um hard-refresh).
+    let cache_control_static = if em_producao {
+        "public, max-age=31536000, immutable"
+    } else {
+        "no-cache"
+    };
+    let static_router = Router::new()
+        .fallback_service(ServeDir::new("static"))
+        .layer(SetResponseHeaderLayer::overriding(
+            header::CACHE_CONTROL,
+            HeaderValue::from_static(cache_control_static),
+        ));
+
     // Captura o state em uma closure para o fallback — evita conflito com with_state
     let state_404 = state.clone();
     let fallback = move || {
@@ -115,7 +134,7 @@ pub async fn montar(state: AppState) -> Router {
     };
 
     Router::new()
-        .nest_service("/static", ServeDir::new("static"))
+        .nest("/static", static_router)
         .merge(publico::rotas(state.clone()))
         .merge(auth::rotas(state.clone()))
         .merge(oauth::rotas(state.clone()))

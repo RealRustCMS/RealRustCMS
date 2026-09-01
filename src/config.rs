@@ -61,6 +61,15 @@ pub struct Config {
     pub tema: String,
     pub template_publico: Option<String>,
 
+    // ─── Versão dos assets estáticos ─────────────────────
+    // Usada como query string `?v=<asset_ver>` nos <link> de CSS servidos de
+    // /static, para cache-busting: com a URL mudando a cada release, o
+    // Cache-Control `immutable` de longa duração em /static (ver routes/mod.rs)
+    // não deixa o navegador preso num CSS velho.
+    // Cascata: ASSET_VER (env, runtime) → option_env!("ASSET_VER") (gravado em
+    // tempo de compilação pelo CI, github.sha) → CARGO_PKG_VERSION.
+    pub asset_ver: String,
+
     // ─── Ambiente ────────────────────────────────────────
     // Se true: cookie de sessão só trafega em HTTPS (Secure flag).
     // Deve ser false em desenvolvimento local (HTTP) e true em produção.
@@ -163,6 +172,15 @@ impl Config {
             .ok()
             .and_then(|v| v.parse().ok())
             .unwrap_or(20);
+
+        // Versão dos assets para o cache-busting de /static (ver campo asset_ver).
+        // env_opt está definido logo abaixo — aqui usamos std::env::var direto
+        // porque ainda não foi declarado.
+        let asset_ver = std::env::var("ASSET_VER")
+            .ok()
+            .filter(|s| !s.is_empty())
+            .or_else(|| option_env!("ASSET_VER").filter(|s| !s.is_empty()).map(String::from))
+            .unwrap_or_else(|| env!("CARGO_PKG_VERSION").to_string());
 
         // ─── Helper interno ───────────────────────────────
         // Lê uma variável de ambiente e retorna None se vazia ou ausente.
@@ -397,6 +415,7 @@ impl Config {
                 .expect("UPLOAD_TAMANHO_MAXIMO_MB inválido"),
             tema,
             template_publico: env_opt("TEMPLATE_PUBLICO"),
+            asset_ver,
             producao,
             csp,
             mfa_obrigatorio,
