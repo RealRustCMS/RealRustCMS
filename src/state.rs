@@ -23,12 +23,20 @@ pub struct AppState {
     // Invalidado toda vez que o menu é salvo no admin.
     pub menu_cache: Arc<RwLock<Vec<MenuItemArvore>>>,
     // Cache de HTML já renderizado de páginas públicas de listagem, para
-    // visitante anônimo. Chave: "pub:<rota>". Valor: o HTML pronto.
+    // visitante anônimo. Chave: "pub:<rota>" (listagens) / "pub:rss" /
+    // "pub:sitemap". Valor: o HTML/XML pronto.
     // Habilitado só quando `cache_ttl` > 0 (config do admin). Qualquer mutação
     // no /admin chama `invalidate_all()` (middleware `invalidar_cache_publico`).
     pub pagina_cache: Cache<String, Arc<str>>,
-    // TTL do `pagina_cache` em segundos, editável em runtime pelo admin.
-    // 0 = cache desligado. Lido pelo `Expiry` a cada inserção — ver
+    // Cache separado para os resultados de /busca. Chave: "busca:<termo>".
+    // Motivo de não usar o `pagina_cache`: a cardinalidade de chaves é ilimitada
+    // (qualquer string de busca) — um scan de buscas despejaria as ~20 listagens
+    // quentes. Aqui `max_capacity` é baixo (200) e há um teto de TTL de 60s
+    // (`time_to_live` no builder), além do `TtlDinamico` compartilhado que
+    // respeita o off-switch do admin. Mesmo `invalidate_all()` nas mutações.
+    pub busca_cache: Cache<String, Arc<str>>,
+    // TTL do `pagina_cache`/`busca_cache` em segundos, editável em runtime pelo
+    // admin. 0 = cache desligado. Lido pelo `Expiry` a cada inserção — ver
     // `TtlDinamico` — então mudar aqui afeta as próximas entradas sem rebuild.
     pub cache_ttl: Arc<AtomicU64>,
 }
@@ -60,11 +68,12 @@ impl AppState {
     }
 }
 
-/// Política de expiração do `pagina_cache` que lê o TTL de um `AtomicU64`
-/// compartilhado — assim o admin muda o TTL sem reconstruir o cache.
+/// Política de expiração do `pagina_cache` e do `busca_cache` que lê o TTL de um
+/// `AtomicU64` compartilhado — assim o admin muda o TTL sem reconstruir o cache.
 /// `Duration::ZERO` (quando o TTL é 0) faz a entrada expirar de imediato;
-/// combinado com o short-circuit no helper `pagina_cacheada`, nada chega a
-/// ser inserido com o cache desligado.
+/// combinado com o short-circuit nos helpers de cache, nada chega a ser inserido
+/// com o cache desligado. No `busca_cache` há ainda um `time_to_live(60s)` no
+/// builder que serve de teto — o moka expira a entrada no que vier primeiro.
 pub struct TtlDinamico(pub Arc<AtomicU64>);
 
 impl moka::Expiry<String, Arc<str>> for TtlDinamico {

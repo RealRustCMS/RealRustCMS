@@ -87,7 +87,8 @@ pub async fn requer_admin(
 // termina em erro derruba o cache inteiro. Mutações de usuário/perfil/comentário
 // também invalidam — inofensivo, só força um miss na próxima visita pública.
 // `invalidate_all()` é O(1) no moka (marca um timestamp; entradas anteriores
-// passam a ser ignoradas na leitura).
+// passam a ser ignoradas na leitura) — vale para o `pagina_cache` (listagens,
+// RSS, sitemap) e para o `busca_cache`.
 pub async fn invalidar_cache_publico(
     State(state): State<AppState>,
     request: Request,
@@ -100,6 +101,7 @@ pub async fn invalidar_cache_publico(
     let res = next.run(request).await;
     if e_mutacao && !res.status().is_server_error() && !res.status().is_client_error() {
         state.pagina_cache.invalidate_all();
+        state.busca_cache.invalidate_all();
     }
     res
 }

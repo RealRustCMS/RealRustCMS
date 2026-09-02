@@ -82,6 +82,16 @@ async fn main() {
         .expire_after(TtlDinamico(cache_ttl.clone()))
         .build();
 
+    // Cache dos resultados de /busca — chave por termo, cardinalidade ilimitada.
+    // `max_capacity` baixo isola o churn das listagens; `time_to_live(60s)` é um
+    // teto (buscas devem refletir conteúdo novo rápido) que se soma ao
+    // `TtlDinamico` — o moka expira a entrada no que vier primeiro.
+    let busca_cache = moka::future::Cache::builder()
+        .max_capacity(200)
+        .time_to_live(std::time::Duration::from_secs(60))
+        .expire_after(TtlDinamico(cache_ttl.clone()))
+        .build();
+
     let porta = config.porta;
     let state = AppState {
         db,
@@ -89,6 +99,7 @@ async fn main() {
         tera: Arc::new(tera),
         menu_cache: Arc::new(RwLock::new(Vec::new())),
         pagina_cache,
+        busca_cache,
         cache_ttl,
     };
 

@@ -29,6 +29,7 @@ use axum::{
     response::{Html, IntoResponse, Redirect},
     Form,
 };
+use moka::future::Cache;
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::future::Future;
@@ -37,12 +38,40 @@ use std::sync::Arc;
 use tera::Context;
 use tower_sessions::Session;
 
-/// Serve o HTML de uma listagem pública a partir do cache quando:
+/// Devolve o corpo (HTML ou XML) de uma rota pública anônima a partir de um
+/// `moka::Cache`, renderizando no miss. `try_get_with` faz coalescing: sob
+/// stampede, `render` roda uma vez só por chave. `render` só é avaliado no
+/// miss; no hit é descartado sem custo. Não checa sessão — o chamador garante
+/// que a rota não varia por sessão (ou faz a checagem antes, como
+/// `pagina_cacheada`). Com o cache desligado (`cache_ttl == 0`) renderiza
+/// direto, sem tocar no cache.
+async fn corpo_cacheado<F>(
+    cache: &Cache<String, Arc<str>>,
+    cache_ttl: u64,
+    chave: String,
+    render: F,
+) -> Result<String>
+where
+    F: Future<Output = Result<String>> + Send,
+{
+    if cache_ttl == 0 {
+        return render.await;
+    }
+
+    let corpo = cache
+        .try_get_with(chave, async move { render.await.map(Arc::<str>::from) })
+        .await
+        .map_err(|e: Arc<AppError>| {
+            AppError::Interno(format!("falha ao renderizar conteúdo cacheado: {e}"))
+        })?;
+
+    Ok(corpo.to_string())
+}
+
+/// Serve o HTML de uma listagem pública a partir do `pagina_cache` quando:
 ///  - o admin habilitou o cache (`cache_ttl` > 0), e
 ///  - o visitante é anônimo (`sessao_membro_ativa` == false) — logado vê menu
 ///    filtrado e artigos restritos, o conteúdo varia por sessão.
-/// `try_get_with` faz coalescing: sob stampede, `render` roda uma vez só por
-/// chave. `render` só é criado/avaliado no miss; no hit é descartado sem custo.
 async fn pagina_cacheada<F>(
     state: &AppState,
     session: &Session,
@@ -52,19 +81,18 @@ async fn pagina_cacheada<F>(
 where
     F: Future<Output = Result<String>> + Send,
 {
-    if state.cache_ttl_segundos() == 0 || MembrosService::sessao_membro_ativa(session).await {
+    if MembrosService::sessao_membro_ativa(session).await {
         return Ok(Html(render.await?));
     }
 
-    let html = state
-        .pagina_cache
-        .try_get_with(chave, async move { render.await.map(Arc::<str>::from) })
-        .await
-        .map_err(|e: Arc<AppError>| {
-            AppError::Interno(format!("falha ao renderizar página cacheada: {e}"))
-        })?;
-
-    Ok(Html(html.to_string()))
+    corpo_cacheado(
+        &state.pagina_cache,
+        state.cache_ttl_segundos(),
+        chave,
+        render,
+    )
+    .await
+    .map(Html)
 }
 
 // Injeta as variáveis globais do site em todos os templates públicos.
@@ -581,26 +609,44 @@ pub async fn buscar(
     Query(query): Query<QueryBusca>,
 ) -> Result<Html<String>> {
     let termo = query.q.unwrap_or_default();
-    let ocultar_restritos = deve_ocultar_restritos(&state, &session).await;
+
+    // Termo curto: sem query ao banco, render trivial, nada a cachear.
+    // Logado: conteúdo varia por sessão (menu filtrado, artigos restritos) —
+    // nunca cacheia. Anônimo com termo válido: entra no `busca_cache`
+    // (chave por termo, teto de 60s — ver state.rs).
+    if termo.len() < 2 || MembrosService::sessao_membro_ativa(&session).await {
+        return Ok(Html(buscar_render(&state, &session, &termo).await?));
+    }
+
+    corpo_cacheado(
+        &state.busca_cache,
+        state.cache_ttl_segundos(),
+        format!("busca:{termo}"),
+        buscar_render(&state, &session, &termo),
+    )
+    .await
+    .map(Html)
+}
+
+async fn buscar_render(state: &AppState, session: &Session, termo: &str) -> Result<String> {
+    let ocultar_restritos = deve_ocultar_restritos(state, session).await;
     let resultados = if termo.len() >= 2 {
         BuscaRepo::novo(&state.db)
-            .buscar_publico(&termo, ocultar_restritos)
+            .buscar_publico(termo, ocultar_restritos)
             .await
             .unwrap_or_default()
     } else {
         vec![]
     };
 
-    let mut ctx = ctx_base(&state, &session).await;
+    let mut ctx = ctx_base(state, session).await;
     ctx.insert("termo", &termo);
     ctx.insert("resultados", &resultados);
     ctx.insert("total", &resultados.len());
 
-    Ok(Html(
-        state
-            .tera
-            .render(&state.config.template_pub("busca.html"), &ctx)?,
-    ))
+    Ok(state
+        .tera
+        .render(&state.config.template_pub("busca.html"), &ctx)?)
 }
 
 pub async fn listar_galeria(
@@ -755,7 +801,29 @@ pub async fn artigos_por_tag(
 // Padrão RSS 2.0: https://www.rssboard.org/rss-specification
 // Leitores compatíveis: Feedly, NewsBlur, Firefox, qualquer agregador.
 
-pub async fn rss(State(state): State<AppState>) -> impl IntoResponse {
+pub async fn rss(State(state): State<AppState>) -> Result<impl IntoResponse> {
+    // RSS não varia por sessão (leitor de feed é sempre anônimo) — cacheia no
+    // `pagina_cache` sob "pub:rss", invalidado junto com as listagens em
+    // qualquer mutação no /admin.
+    let xml = corpo_cacheado(
+        &state.pagina_cache,
+        state.cache_ttl_segundos(),
+        "pub:rss".to_string(),
+        async { Ok(rss_render(&state).await) },
+    )
+    .await?;
+
+    Ok((
+        axum::http::StatusCode::OK,
+        [(
+            axum::http::header::CONTENT_TYPE,
+            "application/xml; charset=utf-8",
+        )],
+        xml,
+    ))
+}
+
+async fn rss_render(state: &AppState) -> String {
     // RSS é sempre consumido anonimamente — não há sessão de membro num leitor
     // de feeds. Respeita apenas a configuração de visibilidade do admin.
     let mostrar = ConfiguracoesRepo::novo(&state.db)
@@ -818,17 +886,30 @@ pub async fn rss(State(state): State<AppState>) -> impl IntoResponse {
          </rss>"
     );
 
-    (
+    xml
+}
+
+pub async fn sitemap(State(state): State<AppState>) -> Result<impl IntoResponse> {
+    // Sitemap não varia por sessão (crawler é anônimo) — mesmo cache do RSS.
+    let xml = corpo_cacheado(
+        &state.pagina_cache,
+        state.cache_ttl_segundos(),
+        "pub:sitemap".to_string(),
+        async { Ok(sitemap_render(&state).await) },
+    )
+    .await?;
+
+    Ok((
         axum::http::StatusCode::OK,
         [(
             axum::http::header::CONTENT_TYPE,
             "application/xml; charset=utf-8",
         )],
         xml,
-    )
+    ))
 }
 
-pub async fn sitemap(State(state): State<AppState>) -> impl IntoResponse {
+async fn sitemap_render(state: &AppState) -> String {
     let base_url = state.config.base_url.trim_end_matches('/').to_string();
 
     // Sitemap também é consumido anonimamente (crawlers) — mesma regra do RSS.
@@ -893,20 +974,11 @@ pub async fn sitemap(State(state): State<AppState>) -> impl IntoResponse {
         ));
     }
 
-    let xml = format!(
+    format!(
         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\
          <urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n\
          {urls}\
          </urlset>"
-    );
-
-    (
-        axum::http::StatusCode::OK,
-        [(
-            axum::http::header::CONTENT_TYPE,
-            "application/xml; charset=utf-8",
-        )],
-        xml,
     )
 }
 
