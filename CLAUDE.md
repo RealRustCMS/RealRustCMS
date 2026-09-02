@@ -272,9 +272,10 @@ Funcionalidades completas:
 ## Próximos passos
 
 - [ ] CSP fase 2: nonces por request (remover `unsafe-inline`)
-- [ ] Perfil do membro (`/membros/perfil`) — `EditarMembroForm` existe em
-      `models/mod.rs` sem handler (dead_code warning esperado). OAuth: só nome.
-      Local: nome + email + senha.
+- [x] ~~Perfil do membro (`/membros/perfil`)~~ — feito. `PerfilMembroForm` em
+      `models/mod.rs`; handlers `form_perfil`/`salvar_perfil`; link na área de
+      membros. OAuth edita só nome; local edita nome + email + senha.
+      `EditarMembroForm` é o form do admin — não confundir.
 
 ---
 

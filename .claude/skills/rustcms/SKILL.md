@@ -219,10 +219,19 @@ multiple files — it is the canonical project state.
 See `CLAUDE.md` → "Estado atual — v4" for the full ✅ list.
 
 **Known open items:**
-- `EditarMembroForm` exists in `models/mod.rs` but has no handler yet
-  (dead_code warning is expected). OAuth members will edit name only;
-  local members will edit name + email + password.
 - CSP phase 2: per-request nonces (replacing `unsafe-inline`).
+
+**Recently done (don't re-implement):**
+- Member self-service profile at `GET/POST /membros/perfil`
+  (`form_perfil`/`salvar_perfil` in `handlers/membros.rs`, `PerfilMembroForm`,
+  template `membros/perfil.html`, linked from `area.html` when `is_membro`).
+  OAuth members edit name only; local members edit name + email + password.
+  `EditarMembroForm` is the *admin's* member-edit form — not the same thing.
+- Public-page cache (moka, opt-in via admin config `cache_ttl_segundos`):
+  listings + RSS + sitemap in `pagina_cache`, `/busca` in a separate short
+  `busca_cache`. `corpo_cacheado()` helper in `handlers/publico.rs`.
+- `Cache-Control` on `/static` (immutable in prod) with `?v=` cache-busting
+  via the Tera `asset()` function — never hardcode `/static/...` in templates.
 
 ---
 

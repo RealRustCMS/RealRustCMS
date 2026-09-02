@@ -254,6 +254,9 @@ pub async fn area(
 
     let mut ctx = ctx_membros(&state, "Área de Membros");
     ctx.insert("nome_exibido", &nome_exibido);
+    // Só membros (não usuários CMS que caíram aqui via sessão) têm perfil
+    // editável — /membros/perfil rejeita sessão só-usuario_id.
+    ctx.insert("is_membro", &membro_id.is_some());
 
     let html = state
         .tera
@@ -329,6 +332,22 @@ pub async fn salvar_perfil(
             return render_perfil_erro(&state, &session, &membro, is_oauth, "E-mail não pode ser vazio.").await;
         }
 
+        // Valida a senha e computa o hash ANTES de qualquer escrita — senão um
+        // nome novo válido + senha malformada gravava o nome e ainda exibia erro.
+        let nova_senha = form.senha_nova.as_deref().unwrap_or("").trim().to_string();
+        let hash_novo = if nova_senha.is_empty() {
+            None
+        } else {
+            let confirm = form.senha_confirm.as_deref().unwrap_or("").trim();
+            if nova_senha != confirm {
+                return render_perfil_erro(&state, &session, &membro, is_oauth, "As senhas não coincidem.").await;
+            }
+            if nova_senha.len() < 8 {
+                return render_perfil_erro(&state, &session, &membro, is_oauth, "A senha deve ter ao menos 8 caracteres.").await;
+            }
+            Some(hash_senha(&nova_senha).map_err(|_| AppError::Interno("Erro ao processar senha.".into()))?)
+        };
+
         match repo.atualizar_perfil(id, &nome, &email).await {
             Ok(_) => {}
             Err(AppError::Interno(msg)) => {
@@ -337,16 +356,7 @@ pub async fn salvar_perfil(
             Err(e) => return Err(e),
         }
 
-        let nova_senha = form.senha_nova.as_deref().unwrap_or("").trim().to_string();
-        if !nova_senha.is_empty() {
-            let confirm = form.senha_confirm.as_deref().unwrap_or("").trim().to_string();
-            if nova_senha != confirm {
-                return render_perfil_erro(&state, &session, &membro, is_oauth, "As senhas não coincidem.").await;
-            }
-            if nova_senha.len() < 8 {
-                return render_perfil_erro(&state, &session, &membro, is_oauth, "A senha deve ter ao menos 8 caracteres.").await;
-            }
-            let hash = hash_senha(&nova_senha).map_err(|_| AppError::Interno("Erro ao processar senha.".into()))?;
+        if let Some(hash) = hash_novo {
             repo.atualizar_senha(id, &hash).await?;
         }
     }

@@ -76,6 +76,9 @@
                 </a>
                 <div class="header-direita">
                     <span>Olá, {{ nome_exibido }}</span>
+                    {% if is_membro %}
+                    <a href="/membros/perfil" class="btn-voltar">Meu perfil</a>
+                    {% endif %}
                     <a href="/" class="btn-voltar">Ver site</a>
                     <form method="post" action="/membros/logout" style="margin:0;">
                         <button type="submit" class="btn-logout">Sair</button>
